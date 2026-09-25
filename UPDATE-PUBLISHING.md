@@ -1,6 +1,6 @@
 # GamingHub Updates veröffentlichen
 
-Der Updater ist in Version 0.8 eingebaut und für `AntiAnto2000/GamingHub` vorbereitet. Sobald dieses öffentliche Repository samt erstem Release existiert, muss in `src/components/UpdateCenter.tsx` `CONFIGURED` auf `true` gesetzt werden.
+Der Updater ist in Version 0.8 eingebaut und für das öffentliche Repository `AntiAnto2000/GamingHub` aktiviert.
 
 ## Release bauen
 

@@ -4,7 +4,7 @@ import { check, type Update } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 
 type Phase = "idle" | "checking" | "available" | "downloading" | "current" | "error" | "unconfigured";
-const CONFIGURED = false;
+const CONFIGURED = true;
 
 export default function UpdateCenter({ automatic = true }: { automatic?: boolean }) {
   const [phase, setPhase] = useState<Phase>("idle");
