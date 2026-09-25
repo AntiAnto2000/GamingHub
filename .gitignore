@@ -1,0 +1,9 @@
+.secrets/
+node_modules/
+dist/
+src-tauri/target/
+releases/
+work/
+fabric-server-mod/
+*.key
+*.key.pub

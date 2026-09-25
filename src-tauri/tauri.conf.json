@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "GamingHub",
+  "version": "0.8.0",
+  "identifier": "com.anton.gaminghub",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "GamingHub 0.8 Early Access",
+        "width": 1280,
+        "height": 900,
+        "minWidth": 760,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "createUpdaterArtifacts": true,
+    "targets": ["nsis"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRDRkI3QTQ5NUVGNUUwRjcKUldUMzRQVmVTWHI3VEJKRWR0eVZ6MGkyejJZOUYxdURUcENlNTF2aG9DL2NyZWJ4QUxKdC9GbHAK",
+      "endpoints": ["https://github.com/AntiAnto2000/GamingHub/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
+  }
+}
