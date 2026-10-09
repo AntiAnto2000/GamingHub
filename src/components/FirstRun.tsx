@@ -16,7 +16,7 @@ export default function FirstRun({ settings, save }: { settings: Settings; save:
     }).catch(error => setStatus(String(error)));
   }, []);
   return <div className="welcome-backdrop"><section className="welcome-card" role="dialog" aria-modal="true" aria-label="GamingHub einrichten">
-    <span className="welcome-version">0.8 · EARLY ACCESS</span>
+    <span className="welcome-version">0.8.1 · EARLY ACCESS</span>
     <h1>Willkommen bei GamingHub.</h1>
     <p>Diese Einrichtung gilt nur auf diesem PC. Bibliothek, Konten und Einstellungen werden nicht mit anderen Nutzern geteilt.</p>
     <label>Dein Anzeigename<input maxLength={40} value={name} onChange={event => setName(event.target.value)} placeholder="Wie dürfen wir dich nennen?" /></label>

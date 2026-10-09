@@ -1257,7 +1257,7 @@ dependencies = [
 
 [[package]]
 name = "gaminghub"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "keyring",
  "nvml-wrapper",

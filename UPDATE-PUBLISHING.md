@@ -19,13 +19,13 @@ Tauri erstellt neben dem NSIS-Installer eine Signaturdatei. Installer und Signat
 
 ```json
 {
-  "version": "0.8.0",
+  "version": "0.8.1",
   "notes": "GamingHub 0.8 Early Access",
   "pub_date": "2026-09-25T12:00:00Z",
   "platforms": {
     "windows-x86_64": {
       "signature": "INHALT_DER_SIG_DATEI",
-      "url": "https://github.com/AntiAnto2000/GamingHub/releases/download/v0.8.0/GamingHub_0.8.0_x64-setup.exe"
+      "url": "https://github.com/AntiAnto2000/GamingHub/releases/download/v0.8.1/GamingHub_0.8.1_x64-setup.exe"
     }
   }
 }

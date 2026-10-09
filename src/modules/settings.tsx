@@ -108,7 +108,7 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
         <h2>Über GamingHub</h2>
         <div className="detail-row">
           <span>Version</span>
-          <span>0.8.0 · Early Access</span>
+          <span>0.8.1 · Early Access</span>
         </div>
         <div className="detail-row">
           <span>Basis</span>
