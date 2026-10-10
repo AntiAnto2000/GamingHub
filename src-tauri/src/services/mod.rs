@@ -1,6 +1,6 @@
 pub mod discord;
 pub mod diagnostics;
-pub mod modrinth;
+pub mod prism;
 pub mod monitor;
 pub mod music;
 pub mod minecraft_server;
