@@ -10,6 +10,20 @@ export interface Game {
   lastLaunchedAt?: number;
   tags?: string[];
   notes?: string;
+  collection?: string;
+  launchArgs?: string;
+  companionApps?: string[];
+  spotifyUri?: string;
+  profileAccent?: string;
+}
+export interface GamingProfile {
+  id: string;
+  name: string;
+  gameId?: string;
+  companionApps: string[];
+  spotifyUri?: string;
+  accent?: string;
+  enabled: boolean;
 }
 export interface Settings {
   name: string;
@@ -29,6 +43,13 @@ export interface Settings {
   steamId?: string;
   welcomeComplete?: boolean;
   automaticUpdates?: boolean;
+  updateChannel?: "stable" | "beta" | "experimental";
+  backgroundImage?: string;
+  backgroundOpacity?: number;
+  layoutMode?: "compact" | "standard" | "couch";
+  gamingProfiles?: GamingProfile[];
+  activeGamingProfile?: string;
+  commandCenterEnabled?: boolean;
 }
 export interface ModuleProps {
   games: Game[];

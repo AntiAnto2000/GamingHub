@@ -6,6 +6,7 @@ import { recentMessages, authorColor } from "./discord";
 import { useNative } from "../services/native";
 import { controlEmbeddedMusic, subscribeEmbeddedMusic, type EmbeddedMusicState } from "../services/musicBridge";
 import UtilityWidget from "../components/UtilityWidget";
+import { readActivity, weeklyActivity, type ActivityEntry } from "../services/activity";
 
 interface HomeMusicStatus {
   connected: boolean; title: string; artist: string; album: string; playing: boolean;
@@ -68,9 +69,12 @@ const cockpitChoices = [
   { id: "alarm", label: "Wecker", icon: "◉", page: "home" },
   { id: "stopwatch", label: "Stoppuhr", icon: "◴", page: "home" },
   { id: "timer", label: "Timer", icon: "⌛", page: "home" },
+  { id: "week", label: "Wochenrückblick", icon: "↗", page: "statistics" },
+  { id: "activity", label: "Aktivitätsverlauf", icon: "≡", page: "statistics" },
 ] as const;
 export default function Home({ settings, setSettings, games, navigate }: ModuleProps) {
   const [customizing, setCustomizing] = useState(false);
+  const [activity, setActivity] = useState<ActivityEntry[]>(readActivity);
   const favorites = games.filter(game => game.favorite);
   const recentGames = [...games].filter(game => game.lastLaunchedAt).sort((a,b) => (b.lastLaunchedAt || 0) - (a.lastLaunchedAt || 0));
   const lastGame = recentGames[0];
@@ -78,6 +82,8 @@ export default function Home({ settings, setSettings, games, navigate }: ModuleP
   const greeting = hour < 5 ? "Gute Nacht" : hour < 11 ? "Guten Morgen" : hour < 18 ? "Hallo" : "Guten Abend";
   const show = (key: "showHero" | "showSystem" | "showLibrary" | "showMusic" | "showDiscord") => settings[key] !== false;
   const widgetIds = settings.cockpitWidgets || ["favorites", "library", "music", "system", "recent"];
+  const week = weeklyActivity(activity);
+  useEffect(() => { const listener = (event: Event) => setActivity((event as CustomEvent<ActivityEntry[]>).detail); addEventListener("gaminghub:activity", listener); return () => removeEventListener("gaminghub:activity", listener); }, []);
   const toggleWidget = (id: string) => setSettings({ ...settings, cockpitWidgets: widgetIds.includes(id) ? widgetIds.filter(item => item !== id) : [...widgetIds, id] });
   const moveWidget = (id: string, direction: -1 | 1) => {
     const next = [...widgetIds]; const from = next.indexOf(id); const to = from + direction;
@@ -97,6 +103,8 @@ export default function Home({ settings, setSettings, games, navigate }: ModuleP
         {widgetIds.map(id => {
           const item = cockpitChoices.find(choice => choice.id === id); if (!item) return null;
           if (["clock","calendar","alarm","stopwatch","timer"].includes(id)) return <UtilityWidget key={id} id={id as "clock"|"calendar"|"alarm"|"stopwatch"|"timer"}/>;
+          if (id === "week") return <button className="cockpit-widget cockpit-wide" key={id} onClick={() => navigate("statistics")}><span>↗</span><strong>{week.launches} Starts</strong><small>{week.activeDays} aktive Tage · Favorit: {week.favorite}</small></button>;
+          if (id === "activity") return <button className="cockpit-widget cockpit-wide" key={id} onClick={() => navigate("statistics")}><span>≡</span><strong>{activity[0]?.title || "Noch ruhig"}</strong><small>{activity[0]?.detail || "Deine Aktivität erscheint hier"}</small></button>;
           const value = id === "favorites" ? String(favorites.length) : id === "library" ? String(games.length) : id === "recent" ? (lastGame?.name || "Noch keines") : id === "music" ? "Player" : "Live";
           const detail = id === "favorites" ? "Lieblingsspiele" : id === "library" ? "Einträge" : id === "recent" ? (lastGame ? new Date(lastGame.lastLaunchedAt!).toLocaleDateString("de-DE") : "Spiel starten") : id === "music" ? "Musik öffnen" : "Werte prüfen";
           return <button className="cockpit-widget" key={id} onClick={() => navigate(item.page)}><span>{item.icon}</span><strong>{value}</strong><small>{detail}</small></button>;

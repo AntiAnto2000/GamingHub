@@ -20,6 +20,8 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
     if (parsed?.format !== "gaminghub-backup" || !parsed.settings || !Array.isArray(parsed.games)) throw new Error("Diese Datei ist kein gültiges GamingHub-Backup.");
     setSettings(parsed.settings); setGames(parsed.games);
   };
+  const profiles = settings.gamingProfiles || [];
+  const addProfile = () => setSettings({ ...settings, gamingProfiles: [...profiles, { id: crypto.randomUUID(), name: `Profil ${profiles.length + 1}`, companionApps: [], enabled: true }] });
   return (
     <>
       <Heading eyebrow="MACH ES ZU DEINEM" title="Einstellungen">
@@ -89,6 +91,12 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
         <div className="settings-actions"><button className="secondary" onClick={() => void detectSteam()}>Lokale Konten erkennen</button></div>{steamStatus && <p className="muted" role="status">{steamStatus}</p>}
       </section>
       <section className="panel info-panel">
+        <div className="settings-section-head"><div className="connection-icon">◈</div><div><h2>Gaming-Modus & Spielprofile</h2><p>Bereite Spiele, Begleitprogramme und Musik als ein gemeinsames Setup vor.</p></div></div>
+        <div className="profile-list">{profiles.map(profile => <article key={profile.id}><label>Name<input value={profile.name} maxLength={60} onChange={event => setSettings({...settings,gamingProfiles:profiles.map(item => item.id===profile.id?{...item,name:event.target.value}:item)})}/></label><label>Spiel<select value={profile.gameId || ""} onChange={event => setSettings({...settings,gamingProfiles:profiles.map(item => item.id===profile.id?{...item,gameId:event.target.value||undefined}:item)})}><option value="">Kein bestimmtes Spiel</option>{games.map(game => <option value={game.id} key={game.id}>{game.name}</option>)}</select></label><label>Spotify-URI<input value={profile.spotifyUri || ""} onChange={event => setSettings({...settings,gamingProfiles:profiles.map(item => item.id===profile.id?{...item,spotifyUri:event.target.value}:item)})}/></label><div className="profile-actions"><label className="hub-check"><input type="checkbox" checked={profile.enabled} onChange={event => setSettings({...settings,gamingProfiles:profiles.map(item => item.id===profile.id?{...item,enabled:event.target.checked}:item)})}/><span>Aktiv</span></label><button className="text-button remove" onClick={() => setSettings({...settings,gamingProfiles:profiles.filter(item => item.id!==profile.id)})}>Entfernen</button></div></article>)}</div>
+        <div className="settings-actions"><button className="secondary" onClick={addProfile}>＋ Spielprofil</button><button className="primary" disabled={!profiles.some(profile => profile.enabled)} onClick={() => { const selected=profiles.find(profile=>profile.id===settings.activeGamingProfile&&profile.enabled)||profiles.find(profile=>profile.enabled); if(selected){ setSettings({...settings,activeGamingProfile:selected.id,focusMode:true}); dispatchEvent(new CustomEvent("gaminghub:profile-activated",{detail:selected})); } }}>Gaming-Modus aktivieren</button></div>
+        <p className="field-help">Der Gaming-Modus reduziert Ablenkungen. Profile können exportiert werden, enthalten aber niemals Passwörter oder Tokens.</p>
+      </section>
+      <section className="panel info-panel">
         <h2>Daten & Diagnose</h2>
         <div className="diagnostic-grid"><div><small>Speicher</small><strong>{Math.round(JSON.stringify(localStorage).length / 1024)} KB lokal</strong></div><div><small>Netzwerk</small><strong>{navigator.onLine ? "Online" : "Offline"}</strong></div><div><small>Spotify</small><strong>{sessionStorage.getItem("gaminghub.spotify.token") ? "Verbunden" : "Nicht verbunden"}</strong></div></div>
         <p>Deine Bibliothek und persönlichen Einstellungen bleiben lokal auf diesem PC. Spotify-Anmeldung, Discord-Token und Steam-API-Schlüssel werden niemals exportiert.</p>
@@ -97,6 +105,7 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
       <section className="panel info-panel update-settings">
         <div className="settings-section-head"><div className="connection-icon">↻</div><div><h2>GamingHub Updates</h2><p>Neue signierte Versionen automatisch erkennen und direkt installieren.</p></div></div>
         <div className="settings-checks"><label><input type="checkbox" checked={settings.automaticUpdates !== false} onChange={e => setSettings({...settings,automaticUpdates:e.target.checked})}/><span>Beim Start automatisch nach Updates suchen</span></label></div>
+        <div className="settings-checks"><label><input type="checkbox" checked={settings.commandCenterEnabled !== false} onChange={e => setSettings({...settings,commandCenterEnabled:e.target.checked})}/><span>Command Center aktivieren (Strg + Umschalt + G)</span></label></div>
         <div className="settings-actions"><button className="primary" onClick={() => dispatchEvent(new Event("gaminghub:check-update"))}>Jetzt nach Updates suchen</button></div>
         <p className="field-help">Update-Pakete werden vor der Installation kryptografisch geprüft. Manipulierte Dateien weist GamingHub ab.</p>
       </section>
@@ -108,7 +117,7 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
         <h2>Über GamingHub</h2>
         <div className="detail-row">
           <span>Version</span>
-          <span>0.8.1 · Early Access</span>
+          <span>0.9.0 · Preview</span>
         </div>
         <div className="detail-row">
           <span>Basis</span>

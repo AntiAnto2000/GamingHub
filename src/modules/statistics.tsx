@@ -4,6 +4,7 @@ import { Empty, Heading } from "../components/ui";
 import { duration, gib, statusLabel, useNative } from "../services/native";
 import type { ModuleProps } from "./types";
 import { useSteamTimes } from "../components/SteamStats";
+import { readActivity, weeklyActivity } from "../services/activity";
 export default function Statistics({ games, settings }: ModuleProps) {
   const hub = useNative();
   const steam = useSteamTimes(hub.native, settings.steamId);
@@ -17,6 +18,8 @@ export default function Statistics({ games, settings }: ModuleProps) {
     return time?.minutes == null ? [] : [{ id: game.id, name: game.name, minutes: time.minutes, lastPlayed: time.lastPlayed }];
   }).sort((a,b) => b.minutes-a.minutes);
   const steamMinutes = steamRows.reduce((sum,row) => sum+row.minutes,0);
+  const activity = readActivity();
+  const week = weeklyActivity(activity);
   const byGame = Object.values(
     sorted.reduce<
       Record<string, { name: string; seconds: number; count: number }>
@@ -75,6 +78,8 @@ export default function Statistics({ games, settings }: ModuleProps) {
           </p>
         </section>
       </div>
+      <section className="panel weekly-recap"><div><small>DEINE LETZTEN 7 TAGE</small><h2>Wochenrückblick</h2><p>{week.events ? `${week.events} Aktivitäten aus ${week.activeDays} aktiven Tagen.` : "Deine nächste Gaming-Woche beginnt mit dem ersten Start."}</p></div><div className="weekly-numbers"><span><strong>{week.launches}</strong>Spielstarts</span><span><strong>{week.activeDays}</strong>Aktive Tage</span><span><strong>{week.favorite}</strong>Favorit</span></div></section>
+      <section className="panel info-panel activity-timeline"><div className="section-title"><div><h2>Aktivitätsverlauf</h2><p className="muted">Starts, Profile, Musik und wichtige Systemereignisse.</p></div></div>{activity.length ? activity.slice(0,20).map(entry => <article key={entry.id}><span>{entry.kind === "launch" ? "▶" : entry.kind === "music" ? "♫" : entry.kind === "profile" ? "◈" : "•"}</span><div><strong>{entry.title}</strong><p>{entry.detail}</p></div><time>{new Date(entry.timestamp).toLocaleString("de-DE",{weekday:"short",hour:"2-digit",minute:"2-digit"})}</time></article>) : <p className="muted">Noch keine Aktivitäten aufgezeichnet.</p>}</section>
       <section className="panel info-panel statistics-steam">
         <div className="section-title"><div><h2>Steam-Spielzeiten</h2><p className="muted">Direkt aus deinem ausgewählten lokalen Steam-Profil.</p></div><button className="secondary" disabled={steam.busy || !settings.steamId} onClick={() => void steam.refresh()}>{steam.busy ? "Aktualisiert …" : "Jetzt aktualisieren"}</button></div>
         {steam.status && <p className={steam.times.length ? "muted" : "notice"}>{steam.status}</p>}

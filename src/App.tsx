@@ -2,13 +2,15 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { modules } from "./modules";
 import { useSavedState } from "./hooks/useSavedState";
-import type { Game, Settings } from "./modules/types";
+import type { Game, GamingProfile, Settings } from "./modules/types";
 import "./App.css";
 import { NativeProvider } from "./services/native";
 import FirstRun from "./components/FirstRun";
 import UtilityOverlay from "./components/UtilityOverlay";
 import Changelog from "./components/Changelog";
 import UpdateCenter from "./components/UpdateCenter";
+import CommandCenter from "./components/CommandCenter";
+import { addActivity } from "./services/activity";
 export default function App() {
   return (
     <NativeProvider>
@@ -67,6 +69,21 @@ function HubApp() {
     return () => window.clearInterval(timer);
   }, []);
   useEffect(() => {
+    const activate = async (event: Event) => {
+      const profile = (event as CustomEvent<GamingProfile>).detail;
+      const game = games.find(item => item.id === profile.gameId);
+      addActivity("profile", profile.name, game ? `Gaming-Modus für ${game.name}` : "Gaming-Modus aktiviert");
+      if (!game) return;
+      try {
+        if (game.steamAppId !== undefined) await invoke("launch_steam", { appId: game.steamAppId, library: game.steamLibrary });
+        else await invoke("launch_game", { gameId: game.id, name: game.name, path: game.path });
+        setGames(old => old.map(item => item.id === game.id ? { ...item, lastLaunchedAt: Date.now() } : item));
+      } catch (error) { setCommandMessage(`Spielprofil konnte nicht vollständig gestartet werden: ${String(error)}`); setCommandOpen(true); }
+    };
+    addEventListener("gaminghub:profile-activated", activate);
+    return () => removeEventListener("gaminghub:profile-activated", activate);
+  }, [games, setGames]);
+  useEffect(() => {
     const update = () => setOnline(navigator.onLine);
     addEventListener("online", update); addEventListener("offline", update);
     return () => { removeEventListener("online", update); removeEventListener("offline", update); };
@@ -75,6 +92,9 @@ function HubApp() {
     const key = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
         event.preventDefault(); setCommandOpen(value => !value);
+      }
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === "g") {
+        event.preventDefault(); dispatchEvent(new Event("gaminghub:toggle-command-center"));
       }
       if (event.key === "Escape") setCommandOpen(false);
     };
@@ -87,6 +107,11 @@ function HubApp() {
     return {
       pages: orderedModules.filter(item => !q || item.label.toLocaleLowerCase("de-DE").includes(q)).slice(0, 5),
       games: games.filter(item => !q || item.name.toLocaleLowerCase("de-DE").includes(q)).slice(0, 6),
+      actions: [
+        { id: "gaming", label: "Gaming-Modus umschalten", icon: "◈" },
+        { id: "command", label: "Command Center öffnen", icon: "⌘" },
+        { id: "updates", label: "Nach Updates suchen", icon: "↻" },
+      ].filter(item => !q || item.label.toLocaleLowerCase("de-DE").includes(q)),
     };
   }, [commandQuery, games, orderedModules]);
   async function quickLaunch(game: Game) {
@@ -95,6 +120,7 @@ function HubApp() {
       if (game.steamAppId !== undefined) await invoke("launch_steam", { appId: game.steamAppId, library: game.steamLibrary });
       else await invoke("launch_game", { gameId: game.id, name: game.name, path: game.path });
       setGames(old => old.map(item => item.id === game.id ? { ...item, lastLaunchedAt: Date.now() } : item));
+      addActivity("launch", game.name, "Über Schnellstart gestartet");
       setCommandOpen(false);
     } catch (error) { setCommandMessage(String(error)); }
   }
@@ -109,7 +135,7 @@ function HubApp() {
     navigate: setActive,
   };
   return (
-    <div className="app" data-accent={settings.accent} data-theme={settings.theme || "graphite"} data-density={settings.density || "comfortable"} data-motion={settings.reduceMotion ? "reduced" : "full"} style={settings.customAccent ? ({ "--accent": settings.customAccent } as CSSProperties) : undefined}>
+    <div className="app" data-accent={settings.accent} data-theme={settings.theme || "graphite"} data-density={settings.density || "comfortable"} data-layout={settings.layoutMode || "standard"} data-motion={settings.reduceMotion ? "reduced" : "full"} style={{ ...(settings.customAccent ? { "--accent": settings.customAccent } : {}), ...(settings.backgroundImage ? { "--hub-background": `linear-gradient(rgb(10 13 12 / ${1-(settings.backgroundOpacity ?? .18)}),rgb(10 13 12 / ${1-(settings.backgroundOpacity ?? .18)})),url(${settings.backgroundImage})` } : {}) } as CSSProperties}>
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-icon">GH</span>
@@ -143,7 +169,7 @@ function HubApp() {
         </nav>
         <div className="sidebar-bottom">
           <span className="status-dot" /> Lokal auf deinem PC
-          <small>GamingHub · 0.8.1 Early Access</small>
+          <small>GamingHub · 0.9 Preview</small>
         </div>
       </aside>
       <div className="workspace">
@@ -152,7 +178,7 @@ function HubApp() {
             Workspace <span className="slash">/</span>{" "}
             <strong>{current.label}</strong>
           </span>
-          <button className="version-chip" onClick={() => setChangelogOpen(true)}>0.8.1 · EARLY ACCESS</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
+          <button className="version-chip" onClick={() => setChangelogOpen(true)}>0.9 · PREVIEW</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
           <div className="clock">
             <time>
               {now.toLocaleTimeString("de-DE", {
@@ -185,13 +211,14 @@ function HubApp() {
           {active !== "music" && <Page key={active} {...pageProps} />}
         </main>
         <footer>
-          DEIN SETUP. DEIN SPACE.<span>V0.8.1 · EARLY ACCESS</span>
+          DEIN SETUP. DEIN SPACE.<span>V0.9 · PREVIEW</span>
         </footer>
       </div>
       {commandOpen && <div className="command-backdrop" onMouseDown={() => setCommandOpen(false)}>
         <section className="command-palette" role="dialog" aria-modal="true" aria-label="Schnellstart" onMouseDown={event => event.stopPropagation()}>
           <input autoFocus aria-label="GamingHub durchsuchen" placeholder="Seiten und Spiele durchsuchen …" value={commandQuery} onChange={event => setCommandQuery(event.target.value)} />
           {commandResults.pages.length > 0 && <><small>SEITEN</small>{commandResults.pages.map(item => <button key={item.id} onClick={() => { setActive(item.id); setCommandOpen(false); }}><span>{item.icon}</span>{item.label}<i>Öffnen</i></button>)}</>}
+          {commandResults.actions.length > 0 && <><small>AKTIONEN</small>{commandResults.actions.map(item => <button key={item.id} onClick={() => { if(item.id === "gaming") setSettings({...settings, focusMode: !settings.focusMode}); if(item.id === "command") dispatchEvent(new Event("gaminghub:toggle-command-center")); if(item.id === "updates") dispatchEvent(new Event("gaminghub:check-update")); setCommandOpen(false); }}><span>{item.icon}</span>{item.label}<i>Ausführen</i></button>)}</>}
           {commandResults.games.length > 0 && <><small>SPIELE & APPS</small>{commandResults.games.map(game => <button key={game.id} disabled={!game.path} onClick={() => void quickLaunch(game)}><span>{game.favorite ? "★" : "▶"}</span>{game.name}<i>Starten</i></button>)}</>}
           {!commandResults.pages.length && !commandResults.games.length && <p>Keine Treffer gefunden.</p>}
           {commandMessage && <p className="notice" role="alert">{commandMessage}</p>}
@@ -199,6 +226,7 @@ function HubApp() {
       </div>}
       {!settings.welcomeComplete && <FirstRun settings={settings} save={setSettings} />}
       <UtilityOverlay />
+      <CommandCenter games={games} settings={settings} navigate={setActive} />
       <UpdateCenter automatic={settings.automaticUpdates !== false} />
       {changelogOpen && <Changelog close={() => setChangelogOpen(false)} />}
     </div>

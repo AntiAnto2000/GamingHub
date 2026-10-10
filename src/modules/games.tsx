@@ -5,6 +5,7 @@ import { useNative, duration } from "../services/native";
 import type { ModuleProps, Game } from "./types";
 import SteamImport from "../components/SteamImport";
 import GameImagePicker from "../components/GameImagePicker";
+import { addActivity } from "../services/activity";
 import SteamStats, { useSteamTimes } from "../components/SteamStats";
 export default function Games({ games, setGames, settings, libraryKind = "steam" }: ModuleProps) {
   const hub = useNative();
@@ -17,6 +18,9 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
   const [cover, setCover] = useState<string | undefined>();
   const [tags, setTags] = useState("");
   const [notes, setNotes] = useState("");
+  const [collection, setCollection] = useState("");
+  const [launchArgs, setLaunchArgs] = useState("");
+  const [spotifyUri, setSpotifyUri] = useState("");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "favorites">("all");
   const [sort, setSort] = useState<"name" | "recent" | "random">("name");
@@ -37,6 +41,9 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
     setCover(game?.cover);
     setTags((game?.tags || []).join(", "));
     setNotes(game?.notes || "");
+    setCollection(game?.collection || "");
+    setLaunchArgs(game?.launchArgs || "");
+    setSpotifyUri(game?.spotifyUri || "");
     setAdding(true);
     setSteamOpen(false);
     setError("");
@@ -85,6 +92,7 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
       });
       setMessage(`${game.name} gestartet. Die Session wird aufgezeichnet.`);
       setGames(old => old.map(item => item.id === game.id ? { ...item, lastLaunchedAt: Date.now() } : item));
+      addActivity("launch", game.name, game.collection ? `Sammlung: ${game.collection}` : "Aus der Bibliothek gestartet");
       await hub.refresh();
     } catch (e) {
       setError(String(e));
@@ -176,6 +184,9 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
               cover,
               tags: tags.split(",").map(tag => tag.trim()).filter(Boolean).slice(0, 12),
               notes: notes.trim().slice(0, 1000),
+              collection: collection.trim().slice(0, 60) || undefined,
+              launchArgs: launchArgs.trim().slice(0, 500) || undefined,
+              spotifyUri: spotifyUri.trim().slice(0, 500) || undefined,
             };
             setGames((old) =>
               editing
@@ -218,6 +229,9 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
             {busy === "pick" ? "Dateiauswahl geöffnet …" : "Datei auswählen …"}
           </button>
           <label>Tags <input maxLength={160} value={tags} onChange={e => setTags(e.target.value)} placeholder="Co-op, Story, Entspannt" /></label>
+          <label>Sammlung <input maxLength={60} value={collection} onChange={e => setCollection(e.target.value)} placeholder="Zum Beispiel Multiplayer oder Entspannt" /></label>
+          <label>Startargumente <input maxLength={500} value={launchArgs} onChange={e => setLaunchArgs(e.target.value)} placeholder="Optional, zum Beispiel -windowed" /></label>
+          <label>Spotify-Playlist oder URI <input maxLength={500} value={spotifyUri} onChange={e => setSpotifyUri(e.target.value)} placeholder="Optional für dieses Spielprofil" /></label>
           <label>Notizen <textarea maxLength={1000} rows={4} value={notes} onChange={e => setNotes(e.target.value)} placeholder="Eigene Notizen, Builds oder Ziele …" /></label>
           <p className="muted">
             {editingSteam ? (
@@ -272,6 +286,7 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
                 <div className="game-info">
                   <h2>{g.name}</h2>
                   {!!g.tags?.length && <div className="game-tags">{g.tags.map(tag => <span key={tag}>{tag}</span>)}</div>}
+                  {g.collection && <span className="collection-chip">{g.collection}</span>}
                   {g.steamAppId !== undefined && <SteamStats appId={g.steamAppId} steamId={settings.steamId} time={steamTimes.times.find(t => t.appId === g.steamAppId)} />}
                   <p className="path" title={g.path}>
                     {g.path || "Bitte Programmdatei hinterlegen"}

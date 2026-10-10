@@ -2,6 +2,7 @@
 node_modules/
 dist/
 src-tauri/target/
+src-tauri/target-v1-work/
 releases/
 work/
 fabric-server-mod/
