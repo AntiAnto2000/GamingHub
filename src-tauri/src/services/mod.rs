@@ -1,4 +1,5 @@
 pub mod discord;
+pub mod diagnostics;
 pub mod modrinth;
 pub mod monitor;
 pub mod music;

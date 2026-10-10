@@ -6,7 +6,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 type Phase = "idle" | "checking" | "available" | "downloading" | "current" | "error" | "unconfigured";
 const CONFIGURED = true;
 
-export default function UpdateCenter({ automatic = true }: { automatic?: boolean }) {
+export default function UpdateCenter({ automatic = true, channel = "stable" }: { automatic?: boolean; channel?: "stable" | "beta" | "experimental" }) {
   const [phase, setPhase] = useState<Phase>("idle");
   const [message, setMessage] = useState("");
   const [progress, setProgress] = useState(0);
@@ -19,11 +19,11 @@ export default function UpdateCenter({ automatic = true }: { automatic?: boolean
     running.current = true; setPhase("checking"); setMessage("Suche nach einer neuen GamingHub-Version …");
     try {
       const found = await check({ timeout: 15000 });
-      if (!found) { setPhase("current"); setMessage("GamingHub ist aktuell."); if (!manual) window.setTimeout(() => setPhase("idle"), 4000); return; }
+      if (!found) { setPhase("current"); setMessage(`GamingHub ist im ${channel}-Kanal aktuell.`); if (!manual) window.setTimeout(() => setPhase("idle"), 4000); return; }
       setUpdate(found); setPhase("available"); setMessage(`Version ${found.version} ist bereit.`);
     } catch (error) { setPhase("error"); setMessage(`Update-Prüfung fehlgeschlagen: ${String(error)}`); }
     finally { running.current = false; }
-  }, []);
+  }, [channel]);
   useEffect(() => {
     const listener = () => void runCheck(true);
     addEventListener("gaminghub:check-update", listener);

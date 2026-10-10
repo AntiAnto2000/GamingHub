@@ -1,11 +1,12 @@
 mod services;
-use tauri::Manager;
+use tauri::{Manager, menu::{Menu, MenuItem}, tray::TrayIconBuilder};
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    services::diagnostics::install_panic_log();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
@@ -13,6 +14,20 @@ pub fn run() {
         .plugin(tauri_plugin_notification::init())
         .setup(|app| {
             app.manage(services::Hub::start(app.handle())?);
+            let open = MenuItem::with_id(app, "open", "GamingHub öffnen", true, None::<&str>)?;
+            let command = MenuItem::with_id(app, "command", "Command Center", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "Beenden", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&open, &command, &quit])?;
+            TrayIconBuilder::new()
+                .icon(app.default_window_icon().expect("app icon").clone())
+                .menu(&menu)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "open" => { if let Some(window)=app.get_webview_window("main") { let _=window.show(); let _=window.set_focus(); } },
+                    "command" => { if let Some(window)=app.get_webview_window("main") { let _=window.show(); let _=window.set_focus(); let _=window.eval("dispatchEvent(new Event('gaminghub:toggle-command-center'))"); } },
+                    "quit" => app.exit(0),
+                    _ => {}
+                })
+                .build(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -45,7 +60,9 @@ pub fn run() {
             services::music::music_status,
             services::music::music_control,
             services::music::open_spotify
-            ,services::spotify_auth::spotify_authorize
+            ,services::spotify_auth::spotify_authorize,
+            services::diagnostics::native_diagnostics,
+            services::diagnostics::read_crash_log
         ])
         .run(tauri::generate_context!())
         .expect("error while running GamingHub");

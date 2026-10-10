@@ -169,7 +169,7 @@ function HubApp() {
         </nav>
         <div className="sidebar-bottom">
           <span className="status-dot" /> Lokal auf deinem PC
-          <small>GamingHub · 0.9 Preview</small>
+          <small>GamingHub · 0.9.5 Release Candidate</small>
         </div>
       </aside>
       <div className="workspace">
@@ -178,7 +178,7 @@ function HubApp() {
             Workspace <span className="slash">/</span>{" "}
             <strong>{current.label}</strong>
           </span>
-          <button className="version-chip" onClick={() => setChangelogOpen(true)}>0.9 · PREVIEW</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
+          <button className="version-chip" onClick={() => setChangelogOpen(true)}>0.9.5 · RC</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
           <div className="clock">
             <time>
               {now.toLocaleTimeString("de-DE", {
@@ -211,7 +211,7 @@ function HubApp() {
           {active !== "music" && <Page key={active} {...pageProps} />}
         </main>
         <footer>
-          DEIN SETUP. DEIN SPACE.<span>V0.9 · PREVIEW</span>
+          DEIN SETUP. DEIN SPACE.<span>V0.9.5 · RC</span>
         </footer>
       </div>
       {commandOpen && <div className="command-backdrop" onMouseDown={() => setCommandOpen(false)}>
@@ -227,7 +227,7 @@ function HubApp() {
       {!settings.welcomeComplete && <FirstRun settings={settings} save={setSettings} />}
       <UtilityOverlay />
       <CommandCenter games={games} settings={settings} navigate={setActive} />
-      <UpdateCenter automatic={settings.automaticUpdates !== false} />
+      <UpdateCenter automatic={settings.automaticUpdates !== false} channel={settings.updateChannel || "stable"} />
       {changelogOpen && <Changelog close={() => setChangelogOpen(false)} />}
     </div>
   );
