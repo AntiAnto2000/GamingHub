@@ -34,6 +34,7 @@ pub fn run() {
             greet,
             services::hub_snapshot,
             services::launch_game,
+            services::launch_companion,
             services::finish_session,
             services::pick_game,
             services::steam::scan_steam,
@@ -64,6 +65,12 @@ pub fn run() {
             services::diagnostics::native_diagnostics,
             services::diagnostics::read_crash_log
         ])
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running GamingHub");
 }

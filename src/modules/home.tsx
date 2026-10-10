@@ -60,7 +60,7 @@ function HomeMusicPlayer({ navigate }: { navigate: (id: string) => void }) {
 }
 const cockpitChoices = [
   { id: "favorites", label: "Favoriten", icon: "★", page: "games" },
-  { id: "library", label: "Bibliothek", icon: "▤", page: "apps" },
+  { id: "library", label: "Bibliothek", icon: "▤", page: "games" },
   { id: "music", label: "Musik", icon: "♫", page: "music" },
   { id: "system", label: "System", icon: "▣", page: "pc" },
   { id: "recent", label: "Zuletzt gestartet", icon: "↶", page: "games" },

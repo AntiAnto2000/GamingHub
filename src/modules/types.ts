@@ -57,5 +57,5 @@ export interface ModuleProps {
   settings: Settings;
   setSettings: Dispatch<SetStateAction<Settings>>;
   navigate: (id: string) => void;
-  libraryKind?: "steam" | "apps";
+  libraryKind?: "steam" | "apps" | "all";
 }

@@ -15,13 +15,11 @@ interface HubModule {
   icon: string;
   component: ComponentType<ModuleProps>;
 }
-const SteamPage = (props: ModuleProps) => Games({ ...props, libraryKind: "steam" });
-const AppsPage = (props: ModuleProps) => Games({ ...props, libraryKind: "apps" });
+const LibraryPage = (props: ModuleProps) => Games({ ...props, libraryKind: "all" });
 // Navigation and page rendering share this registry. Register future modules here.
 export const modules: HubModule[] = [
   { id: "home", label: "Home", icon: "⌂", component: Home },
-  { id: "games", label: "Steam", icon: "▦", component: SteamPage },
-  { id: "apps", label: "Apps", icon: "▤", component: AppsPage },
+  { id: "games", label: "Bibliothek", icon: "▦", component: LibraryPage },
   { id: "pc", label: "PC-Monitoring", icon: "▣", component: PcMonitor },
   { id: "music", label: "Musik", icon: "♫", component: Music },
   { id: "discord", label: "Discord", icon: "◉", component: Discord },

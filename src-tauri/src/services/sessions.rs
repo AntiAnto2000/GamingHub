@@ -127,6 +127,7 @@ impl Sessions {
         game_id: String,
         name: String,
         path: String,
+        args: Option<String>,
     ) -> Result<String, String> {
         if self.error.is_some() {
             return Err(self.error.clone().unwrap());
@@ -143,9 +144,13 @@ impl Sessions {
             return Err("Für dieses Programm läuft bereits eine Session.".into());
         }
         // Deliberately no shell or command-string interpolation. The selected file is the executable.
-        let child = Command::new(&exe)
-            .current_dir(exe.parent().unwrap())
-            .spawn()
+        let mut command = Command::new(&exe);
+        command.current_dir(exe.parent().unwrap());
+        if let Some(args) = args {
+            if args.len() > 500 { return Err("Startargumente sind zu lang.".into()); }
+            command.args(args.split_whitespace().take(32));
+        }
+        let child = command.spawn()
             .map_err(|e| format!("Programmstart fehlgeschlagen: {e}"))?;
         let now = timestamp();
         let id = format!("{now}-{}-{}", child.id(), self.records.len());
@@ -257,7 +262,7 @@ mod tests {
         fs::write(&file, b"broken").unwrap();
         let mut sessions = Sessions::load(file.clone());
         assert!(sessions
-            .launch("a".into(), "A".into(), "C:\\a.exe".into())
+            .launch("a".into(), "A".into(), "C:\\a.exe".into(), None)
             .is_err());
         assert_eq!(fs::read(&file).unwrap(), b"broken");
         fs::remove_file(file).unwrap();
@@ -272,10 +277,10 @@ mod tests {
         let file = dir.join("sessions.json");
         let mut sessions = Sessions::load(file.clone());
         sessions
-            .launch("fixture".into(), "Fixture".into(), exe.clone())
+            .launch("fixture".into(), "Fixture".into(), exe.clone(), None)
             .unwrap();
         assert!(sessions
-            .launch("fixture".into(), "Fixture".into(), exe)
+            .launch("fixture".into(), "Fixture".into(), exe, None)
             .is_err());
         std::thread::sleep(std::time::Duration::from_secs(3));
         sessions.tick(&Telemetry {

@@ -72,12 +72,20 @@ pub fn launch_game(
     game_id: String,
     name: String,
     path: String,
+    args: Option<String>,
 ) -> Result<String, String> {
     hub.0
         .lock()
         .map_err(|e| e.to_string())?
         .sessions
-        .launch(game_id, name, path)
+        .launch(game_id, name, path, args)
+}
+#[tauri::command]
+pub fn launch_companion(path: String) -> Result<(), String> {
+    let exe = std::path::PathBuf::from(path).canonicalize().map_err(|_| "Begleitprogramm wurde nicht gefunden.".to_string())?;
+    if !exe.is_file() || exe.extension().and_then(|value| value.to_str()).is_none_or(|value| !value.eq_ignore_ascii_case("exe")) { return Err("Begleitprogramme müssen eine vorhandene EXE-Datei sein.".into()); }
+    std::process::Command::new(&exe).current_dir(exe.parent().ok_or("Ungültiger Programmpfad.")?).spawn().map_err(|e| format!("Begleitprogramm konnte nicht gestartet werden: {e}"))?;
+    Ok(())
 }
 #[tauri::command]
 pub fn finish_session(hub: State<'_, Hub>, id: String) -> Result<(), String> {

@@ -1,5 +1,6 @@
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
+$env:CARGO_TARGET_DIR = Join-Path $root "src-tauri\target-release-check"
 $package = Get-Content -Raw (Join-Path $root "package.json") | ConvertFrom-Json
 $tauri = Get-Content -Raw (Join-Path $root "src-tauri\tauri.conf.json") | ConvertFrom-Json
 $cargoVersion = (Select-String -Path (Join-Path $root "src-tauri\Cargo.toml") -Pattern '^version\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
@@ -9,4 +10,5 @@ if (-not $tauri.plugins.updater.pubkey) { throw "Updater-Public-Key fehlt." }
 npm audit --audit-level=high
 npm run build
 cargo test --manifest-path (Join-Path $root "src-tauri\Cargo.toml")
+cargo clippy --manifest-path (Join-Path $root "src-tauri\Cargo.toml") --all-targets -- -D warnings
 Write-Host "Release-Check für GamingHub $($package.version) erfolgreich."

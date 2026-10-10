@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { modules } from "./modules";
 import { useSavedState } from "./hooks/useSavedState";
 import type { Game, GamingProfile, Settings } from "./modules/types";
@@ -73,10 +74,12 @@ function HubApp() {
       const profile = (event as CustomEvent<GamingProfile>).detail;
       const game = games.find(item => item.id === profile.gameId);
       addActivity("profile", profile.name, game ? `Gaming-Modus für ${game.name}` : "Gaming-Modus aktiviert");
+      for (const path of profile.companionApps.slice(0, 5)) await invoke("launch_companion", { path }).catch(() => undefined);
+      if (profile.spotifyUri && (/^spotify:/i.test(profile.spotifyUri) || /^https:\/\/open\.spotify\.com\//i.test(profile.spotifyUri))) await openUrl(profile.spotifyUri).catch(() => undefined);
       if (!game) return;
       try {
         if (game.steamAppId !== undefined) await invoke("launch_steam", { appId: game.steamAppId, library: game.steamLibrary });
-        else await invoke("launch_game", { gameId: game.id, name: game.name, path: game.path });
+        else await invoke("launch_game", { gameId: game.id, name: game.name, path: game.path, args: game.launchArgs });
         setGames(old => old.map(item => item.id === game.id ? { ...item, lastLaunchedAt: Date.now() } : item));
       } catch (error) { setCommandMessage(`Spielprofil konnte nicht vollständig gestartet werden: ${String(error)}`); setCommandOpen(true); }
     };
@@ -118,7 +121,7 @@ function HubApp() {
     setCommandMessage("");
     try {
       if (game.steamAppId !== undefined) await invoke("launch_steam", { appId: game.steamAppId, library: game.steamLibrary });
-      else await invoke("launch_game", { gameId: game.id, name: game.name, path: game.path });
+      else await invoke("launch_game", { gameId: game.id, name: game.name, path: game.path, args: game.launchArgs });
       setGames(old => old.map(item => item.id === game.id ? { ...item, lastLaunchedAt: Date.now() } : item));
       addActivity("launch", game.name, "Über Schnellstart gestartet");
       setCommandOpen(false);
@@ -169,7 +172,7 @@ function HubApp() {
         </nav>
         <div className="sidebar-bottom">
           <span className="status-dot" /> Lokal auf deinem PC
-          <small>GamingHub · 0.9.5 Release Candidate</small>
+          <small>GamingHub · Version 1.0</small>
         </div>
       </aside>
       <div className="workspace">
@@ -178,7 +181,7 @@ function HubApp() {
             Workspace <span className="slash">/</span>{" "}
             <strong>{current.label}</strong>
           </span>
-          <button className="version-chip" onClick={() => setChangelogOpen(true)}>0.9.5 · RC</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
+          <button className="version-chip" onClick={() => setChangelogOpen(true)}>1.0 · STABLE</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
           <div className="clock">
             <time>
               {now.toLocaleTimeString("de-DE", {
@@ -211,7 +214,7 @@ function HubApp() {
           {active !== "music" && <Page key={active} {...pageProps} />}
         </main>
         <footer>
-          DEIN SETUP. DEIN SPACE.<span>V0.9.5 · RC</span>
+          DEIN SETUP. DEIN SPACE.<span>V1.0 · STABLE</span>
         </footer>
       </div>
       {commandOpen && <div className="command-backdrop" onMouseDown={() => setCommandOpen(false)}>

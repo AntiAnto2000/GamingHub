@@ -9,7 +9,7 @@ import { addActivity } from "../services/activity";
 import SteamStats, { useSteamTimes } from "../components/SteamStats";
 export default function Games({ games, setGames, settings, libraryKind = "steam" }: ModuleProps) {
   const hub = useNative();
-  const visibleGames = games.filter(g => libraryKind === "steam" ? g.steamAppId !== undefined : g.steamAppId === undefined);
+  const visibleGames = games.filter(g => libraryKind === "all" || (libraryKind === "steam" ? g.steamAppId !== undefined : g.steamAppId === undefined));
   const steamTimes = useSteamTimes(hub.native, settings.steamId);
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -89,6 +89,7 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
         gameId: game.id,
         name: game.name,
         path: game.path,
+        args: game.launchArgs,
       });
       setMessage(`${game.name} gestartet. Die Session wird aufgezeichnet.`);
       setGames(old => old.map(item => item.id === game.id ? { ...item, lastLaunchedAt: Date.now() } : item));
@@ -115,8 +116,8 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
   }
   return (
     <>
-      <Heading eyebrow={libraryKind === "steam" ? "STEAM-BIBLIOTHEK" : "DEINE APPS"} title={libraryKind === "steam" ? "Steam" : "Apps"}>
-        {libraryKind === "steam" ? "Starte deine Steam-Spiele direkt und behalte deine Sessions im Blick." : "Verwalte eigene Programme und Microsoft-Store-Apps an einem Ort."}
+      <Heading eyebrow="DEINE UNIVERSELLE BIBLIOTHEK" title="Spiele & Apps">
+        Steam-Spiele, Microsoft-Store-Apps und eigene Programme in einer gemeinsamen Sammlung.
       </Heading>
       {!hub.native && (
         <p className="notice">
@@ -142,7 +143,7 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
         <SelectMenu label="Bibliothek filtern" value={filter} options={[{value:"all",label:"Alle Einträge"},{value:"favorites",label:"Nur Favoriten"}]} onChange={setFilter}/>
         <SelectMenu label="Bibliothek sortieren" value={sort} options={[{value:"name",label:"Name A–Z"},{value:"recent",label:"Zuletzt gestartet"},{value:"random",label:"Zufallsauswahl"}]} onChange={setSort}/>
         {sort === "random" && filtered.length > 0 && <button className="secondary" onClick={() => { const pick = filtered[Math.floor(Math.random() * filtered.length)]; setMessage(`Wie wäre es mit ${pick.name}?`); }}>🎲 Spiel wählen</button>}
-        {libraryKind === "steam" && <button
+        {(libraryKind === "steam" || libraryKind === "all") && <button
           className="secondary"
           disabled={!hub.native || !!busy}
           onClick={() => {
@@ -152,7 +153,7 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
         >
           Steam-Spiele importieren
         </button>}
-        {libraryKind === "apps" && <button
+        {(libraryKind === "apps" || libraryKind === "all") && <button
           className="primary"
           onClick={() => (adding ? setAdding(false) : edit())}
         >
@@ -166,7 +167,7 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
           onClose={() => setSteamOpen(false)}
         />
       )}
-      {libraryKind === "steam" && visibleGames.length > 0 && <section className="panel steam-time-toolbar">
+      {(libraryKind === "steam" || libraryKind === "all") && visibleGames.some(game=>game.steamAppId!==undefined) && <section className="panel steam-time-toolbar">
         <div className="steam-time-copy"><strong>Steam-Spielzeit & Achievements</strong><p className="muted">{settings.steamId ? `Profil ${settings.steamId}` : "Kein Steam-Profil ausgewählt"}</p><p role="status">{steamTimes.status || "Steam-Daten werden beim Öffnen automatisch gelesen."}</p></div>
         <div className="steam-time-footer"><small>Automatisch alle 10 Minuten</small><button className="secondary compact-button" disabled={!hub.native || steamTimes.busy} onClick={steamTimes.refresh}>{steamTimes.busy ? "Aktualisiert …" : "Jetzt aktualisieren"}</button></div>
       </section>}
@@ -261,7 +262,7 @@ export default function Games({ games, setGames, settings, libraryKind = "steam"
       {!games.length ? (
         <section className="panel">
           <Empty icon="▦" title="Deine Bibliothek ist noch leer">
-          {libraryKind === "steam" ? "Importiere deine Steam-Spiele." : "Füge eine Programmdatei oder Store-App hinzu."}
+          Importiere Steam-Spiele oder füge eigene Programme hinzu.
           </Empty>
         </section>
       ) : filtered.length ? (
