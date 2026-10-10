@@ -1,5 +1,5 @@
 use serde::Serialize;
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, process::Command};
 use tauri_plugin_opener::OpenerExt;
 #[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -85,7 +85,7 @@ pub async fn scan_modrinth() -> Result<Vec<ModrinthProfile>, String> {
         .map_err(|_| String::from("Modrinth-Scan fehlgeschlagen."))?
 }
 #[tauri::command]
-pub fn launch_modrinth(app: tauri::AppHandle, profile_path: String) -> Result<(), String> {
+pub fn launch_modrinth(_app: tauri::AppHandle, profile_path: String) -> Result<(), String> {
     let p = PathBuf::from(&profile_path);
     let root = root();
     let c = p
@@ -104,9 +104,10 @@ pub fn launch_modrinth(app: tauri::AppHandle, profile_path: String) -> Result<()
     if !exe.is_file() {
         return Err("Modrinth App.exe wurde nicht gefunden. Bitte Modrinth installieren.".into());
     }
-    app.opener()
-        .open_path(exe.to_string_lossy().to_string(), None::<&str>)
-        .map_err(|_| "Profilordner konnte nicht geöffnet werden.".into())
+    Command::new(exe)
+        .spawn()
+        .map(|_| ())
+        .map_err(|_| "Modrinth konnte nicht gestartet werden.".into())
 }
 #[cfg(test)]
 mod tests {

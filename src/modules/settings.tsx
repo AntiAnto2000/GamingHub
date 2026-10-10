@@ -129,7 +129,7 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
         <h2>Über GamingHub</h2>
         <div className="detail-row">
           <span>Version</span>
-          <span>1.2.0 · Stable</span>
+          <span>1.2.1 · Stable</span>
         </div>
         <div className="detail-row">
           <span>Basis</span>

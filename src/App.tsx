@@ -172,7 +172,7 @@ function HubApp() {
         </nav>
         <div className="sidebar-bottom">
           <span className="status-dot" /> Lokal auf deinem PC
-          <small>GamingHub · Version 1.2</small>
+          <small>GamingHub · Version 1.2.1</small>
         </div>
       </aside>
       <div className="workspace">
@@ -181,7 +181,7 @@ function HubApp() {
             Workspace <span className="slash">/</span>{" "}
             <strong>{current.label}</strong>
           </span>
-          <button className="version-chip" onClick={() => setChangelogOpen(true)}>1.2 · STABLE</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
+          <button className="version-chip" onClick={() => setChangelogOpen(true)}>1.2.1 · STABLE</button><button className="command-trigger" onClick={() => setCommandOpen(true)}>⌕ Schnellstart <kbd>Strg K</kbd></button>
           <div className="clock">
             <time>
               {now.toLocaleTimeString("de-DE", {
@@ -214,7 +214,7 @@ function HubApp() {
           {active !== "music" && <Page key={active} {...pageProps} />}
         </main>
         <footer>
-          DEIN SETUP. DEIN SPACE.<span>V1.2 · STABLE</span>
+          DEIN SETUP. DEIN SPACE.<span>V1.2.1 · STABLE</span>
         </footer>
       </div>
       {commandOpen && <div className="command-backdrop" onMouseDown={() => setCommandOpen(false)}>

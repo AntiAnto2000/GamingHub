@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "GamingHub",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "identifier": "com.anton.gaminghub",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "GamingHub 1.2",
+        "title": "GamingHub 1.2.1",
         "width": 1280,
         "height": 900,
         "minWidth": 760,
