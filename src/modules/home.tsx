@@ -6,6 +6,7 @@ import { recentMessages, authorColor } from "./discord";
 import { useNative } from "../services/native";
 import { controlEmbeddedMusic, subscribeEmbeddedMusic, type EmbeddedMusicState } from "../services/musicBridge";
 import UtilityWidget from "../components/UtilityWidget";
+import { NextIcon, PlayIcon, PreviousIcon, StopIcon } from "../components/Icons";
 import { readActivity, weeklyActivity, type ActivityEntry } from "../services/activity";
 
 interface HomeMusicStatus {
@@ -50,9 +51,9 @@ function HomeMusicPlayer({ navigate }: { navigate: (id: string) => void }) {
     <div className="mini-player-top"><span className="eyebrow">DEIN SOUNDTRACK</span><span className={"mini-player-state " + (visible?.playing ? "playing" : "")}>{visible?.connected ? (visible.playing ? "WIEDERGABE" : "PAUSIERT") : "OFFLINE"}</span></div>
     <div className="mini-player-track"><div className="record" aria-hidden="true">♫</div><div><h2>{visible?.title || "Spotify ist bereit"}</h2><p>{visible?.connected ? [visible.artist, visible.album].filter(Boolean).join(" · ") || "Spotify" : "Öffne Spotify und starte einen Titel."}</p></div></div>
     <div className="mini-player-controls" aria-label="Musiksteuerung">
-      <button aria-label="Vorheriger Titel" title="Zurück" disabled={!visible?.canPrevious || !!busy} onClick={() => void control("previous")}>⏮</button>
-      <button className="mini-main-control" aria-label={visible?.playing ? "Wiedergabe stoppen" : "Wiedergabe starten"} title={visible?.playing ? "Stopp" : "Start"} disabled={!!busy || (visible?.playing ? !visible.canStop : !visible?.canToggle)} onClick={() => void control(visible?.playing ? "stop" : "toggle")}>{busy === "toggle" || busy === "stop" ? "…" : visible?.playing ? "■" : "▶"}</button>
-      <button aria-label="Nächster Titel" title="Weiter" disabled={!visible?.canNext || !!busy} onClick={() => void control("next")}>⏭</button>
+      <button className="icon-button" aria-label="Vorheriger Titel" title="Zurück" disabled={!visible?.canPrevious || !!busy} onClick={() => void control("previous")}><PreviousIcon/></button>
+      <button className="mini-main-control icon-button" aria-label={visible?.playing ? "Wiedergabe stoppen" : "Wiedergabe starten"} title={visible?.playing ? "Stopp" : "Start"} disabled={!!busy || (visible?.playing ? !visible.canStop : !visible?.canToggle)} onClick={() => void control(visible?.playing ? "stop" : "toggle")}>{busy === "toggle" || busy === "stop" ? <span className="button-loader"/> : visible?.playing ? <StopIcon/> : <PlayIcon/>}</button>
+      <button className="icon-button" aria-label="Nächster Titel" title="Weiter" disabled={!visible?.canNext || !!busy} onClick={() => void control("next")}><NextIcon/></button>
     </div>
     {error && <p className="mini-player-error" role="alert">{error}</p>}
     <div className="mini-player-links">{!visible?.connected && native && <button className="text-button" onClick={() => void invoke("open_spotify").then(refresh).catch(reason => setError(String(reason)))}>Spotify öffnen</button>}<button className="text-button" onClick={() => navigate("music")}>Musikbereich öffnen ↗</button></div>

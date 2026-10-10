@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { NextIcon, PauseIcon, PlayIcon, PreviousIcon } from "../components/Icons";
 import { availableSpotifyDevices, controlSpotifyDevice, type SpotifyDevice, artistCatalog, artistTracks, beginSpotifyLogin, finishSpotifyLogin, genreTrackPool, playContextOnDevice, playOnDevice, searchArtists, searchPlaylists, searchTracks, spotifyToken, type SpotifyArtist, type SpotifyPlaylist, type SpotifyTrack } from "../services/spotify";
 import "./music.css";
 import { publishEmbeddedMusic, registerEmbeddedMusicControls } from "../services/musicBridge";
@@ -188,9 +189,9 @@ export default function Music() {
           <div><h2>{current?.name || "Dein nächster Lieblingssong"}</h2><p>{current ? current.artists.map(a => a.name).join(", ") : "Wähle einen Titel aus deinen Suchergebnissen."}</p><span className="music-deck-source">{output ? outputs.find(item => item.id === output)?.name || "Spotify-Gerät" : "GamingHub · integrierter Player"}</span></div>
         </div>
         <div className="music-deck-controls">
-          <button className="music-skip" aria-label="Vorheriger Titel" disabled={!current || busy} onClick={() => void action(() => output ? remoteControl("previous") : player.current!.previousTrack())}>⏮</button>
-          <button className="music-main-play" aria-label={paused ? "Wiedergabe" : "Pause"} disabled={!current || busy} onClick={() => void action(() => output ? remoteControl(paused ? "play" : "pause") : player.current!.togglePlay())}>{busy ? "…" : paused ? "▶" : "Ⅱ"}</button>
-          <button className="music-skip" aria-label="Nächster Titel" disabled={!current || busy} onClick={() => void action(() => output ? remoteControl("next") : player.current!.nextTrack())}>⏭</button>
+          <button className="music-skip icon-button" aria-label="Vorheriger Titel" disabled={!current || busy} onClick={() => void action(() => output ? remoteControl("previous") : player.current!.previousTrack())}><PreviousIcon/></button>
+          <button className="music-main-play icon-button" aria-label={paused ? "Wiedergabe" : "Pause"} disabled={!current || busy} onClick={() => void action(() => output ? remoteControl(paused ? "play" : "pause") : player.current!.togglePlay())}>{busy ? <span className="button-loader"/> : paused ? <PlayIcon/> : <PauseIcon/>}</button>
+          <button className="music-skip icon-button" aria-label="Nächster Titel" disabled={!current || busy} onClick={() => void action(() => output ? remoteControl("next") : player.current!.nextTrack())}><NextIcon/></button>
         </div>
       </div>
       <div className="music-deck-output">
