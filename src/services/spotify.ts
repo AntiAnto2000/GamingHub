@@ -311,6 +311,17 @@ export async function controlSpotifyDevice(deviceId: string, action: "pause" | "
   });
   await checkSpotifyResponse(response);
 }
+export async function setSpotifyVolume(deviceId: string, percent: number) {
+  const token = spotifyToken();
+  if (!token) throw new Error("Bitte zuerst Spotify verbinden.");
+  if (!deviceId) throw new Error("Bitte zuerst eine Audioausgabe auswählen.");
+  const volume = Math.max(0, Math.min(100, Math.round(percent)));
+  const response = await spotifyFetch(`https://api.spotify.com/v1/me/player/volume?${new URLSearchParams({ volume_percent: String(volume), device_id: deviceId })}`, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  await checkSpotifyResponse(response);
+}
 export async function playOnDevice(deviceId: string, uri: string, queue: string[] = []) {
   const token = spotifyToken();
   if (!token) throw new Error("Bitte zuerst Spotify verbinden.");

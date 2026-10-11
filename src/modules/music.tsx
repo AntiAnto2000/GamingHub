@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { NextIcon, PauseIcon, PlayIcon, PreviousIcon } from "../components/Icons";
-import { availableSpotifyDevices, controlSpotifyDevice, type SpotifyDevice, artistCatalog, artistTracks, beginSpotifyLogin, finishSpotifyLogin, genreTrackPool, playContextOnDevice, playOnDevice, searchArtists, searchPlaylists, searchTracks, spotifyToken, type SpotifyArtist, type SpotifyPlaylist, type SpotifyTrack } from "../services/spotify";
+import { availableSpotifyDevices, controlSpotifyDevice, type SpotifyDevice, artistCatalog, artistTracks, beginSpotifyLogin, finishSpotifyLogin, genreTrackPool, playContextOnDevice, playOnDevice, searchArtists, searchPlaylists, searchTracks, setSpotifyVolume, spotifyToken, type SpotifyArtist, type SpotifyPlaylist, type SpotifyTrack } from "../services/spotify";
 import "./music.css";
 import { publishEmbeddedMusic, registerEmbeddedMusicControls } from "../services/musicBridge";
 interface Player {
   addListener(event: string, callback: (data: any) => void): void;
   connect(): Promise<boolean>; disconnect(): void; activateElement(): Promise<void>;
   togglePlay(): Promise<void>; previousTrack(): Promise<void>; nextTrack(): Promise<void>;
+  setVolume(volume: number): Promise<void>;
 }
 type SDKWindow = Window & { Spotify?: { Player: new (options: { name: string; getOAuthToken: (callback: (token: string) => void) => void; volume: number }) => Player }; onSpotifyWebPlaybackSDKReady?: () => void };
 const messageOf = (e: unknown) => e instanceof Error ? e.message : String(e);
@@ -49,6 +50,8 @@ export default function Music() {
   const [output, setOutput] = useState("");
   const [deviceMessage, setDeviceMessage] = useState("");
   const [checkingDevices, setCheckingDevices] = useState(false);
+  const [volume, setVolume] = useState(() => Math.max(0, Math.min(100, Number(localStorage.getItem("gaminghub.spotify.volume") ?? 50))));
+  const [soundStudioOpen, setSoundStudioOpen] = useState(false);
   const target = output || device;
   const outputRef = useRef(output);
   outputRef.current = output;
@@ -88,7 +91,7 @@ export default function Music() {
     const sdk = window as SDKWindow;
     const initialize = () => {
       if (disposed || instance || !sdk.Spotify) return;
-      instance = new sdk.Spotify.Player({ name: "GamingHub", volume: 0.5, getOAuthToken: cb => cb(spotifyToken() || "") });
+      instance = new sdk.Spotify.Player({ name: "GamingHub", volume: volume / 100, getOAuthToken: cb => cb(spotifyToken() || "") });
       player.current = instance;
       instance.addListener("ready", ({ device_id }) => { if (!disposed) { setDevice(device_id); setPlayerError(""); } });
       instance.addListener("not_ready", () => { if (!disposed) setDevice(""); });
@@ -101,6 +104,15 @@ export default function Music() {
     const timeout = window.setTimeout(() => { if (!disposed && !instance) setPlayerError("Spotify-Player konnte nicht geladen werden. Bitte Verbindung prüfen und neu laden."); }, 15000);
     return () => { disposed = true; clearTimeout(timeout); instance?.disconnect(); player.current = null; if (sdk.onSpotifyWebPlaybackSDKReady === initialize) sdk.onSpotifyWebPlaybackSDKReady = undefined; };
   }, [connected, playerGeneration]);
+  async function applyVolume(next: number) {
+    const safe = Math.max(0, Math.min(100, next));
+    setVolume(safe);
+    localStorage.setItem("gaminghub.spotify.volume", String(safe));
+    try {
+      if (outputRef.current) await setSpotifyVolume(outputRef.current, safe);
+      else await player.current?.setVolume(safe / 100);
+    } catch (e) { setPlayerError(messageOf(e)); }
+  }
   useEffect(() => {
     publishEmbeddedMusic({
       active: Boolean(current),
@@ -178,14 +190,14 @@ export default function Music() {
         {history.length > 0 && <details className="music-history"><summary>Zuletzt gespielt ({history.length})</summary><div>{history.slice(0, 8).map(track => <button key={track.id} onClick={() => { setQuery(`${track.name} ${track.artists[0]?.name || ""}`); setMode("track"); }}>{liked.includes(track.id) ? "♥ " : ""}{track.name}<small>{track.artists.map(a => a.name).join(", ")}</small></button>)}</div><button className="text-button" onClick={() => { setHistory([]); localStorage.removeItem("gaminghub.spotify.history.v1"); }}>Verlauf löschen</button></details>}
       </section>
     </div>
-    <section className="music-deck" aria-label="Musikplayer">
+    <section className={"music-deck" + (current && !paused ? " is-playing" : "")} aria-label="Musikplayer">
       <div className="music-deck-top">
         <span className="music-kicker">DEIN PLAYER</span>
         <span className={"music-connection" + (playerError ? " has-error" : "")} role="status">{busy ? "Wird vorbereitet …" : playerError ? "Verbindung prüfen" : !connected ? "Nicht verbunden" : current ? (paused ? "Pausiert" : "Wiedergabe angefordert") : "Titel auswählen"}</span>
       </div>
       <div className="music-deck-main">
         <div className="music-deck-track">
-          {current?.album?.images?.[0] ? <img className="music-deck-cover" src={current.album.images[0].url} alt="" /> : <div className="music-deck-cover placeholder" aria-hidden="true">♫</div>}
+          <div className="music-cover-shell">{current?.album?.images?.[0] ? <img className="music-deck-cover" src={current.album.images[0].url} alt="" /> : <div className="music-deck-cover placeholder" aria-hidden="true">♫</div>}<span className="music-playing-bars" aria-hidden="true"><i/><i/><i/></span></div>
           <div><h2>{current?.name || "Dein nächster Lieblingssong"}</h2><p>{current ? current.artists.map(a => a.name).join(", ") : "Wähle einen Titel aus deinen Suchergebnissen."}</p><span className="music-deck-source">{output ? outputs.find(item => item.id === output)?.name || "Spotify-Gerät" : "GamingHub · integrierter Player"}</span></div>
         </div>
         <div className="music-deck-controls">
@@ -202,6 +214,15 @@ export default function Music() {
         </select>
         <button className="secondary" disabled={!connected || checkingDevices || busy} onClick={() => void refreshOutputs()}>{checkingDevices ? "Sucht …" : "Aktualisieren"}</button>
       </div>
+      <div className="music-sound-strip">
+        <label className="music-volume" htmlFor="music-volume"><span aria-hidden="true">◖</span><strong>Lautstärke</strong><input id="music-volume" type="range" min="0" max="100" value={volume} onChange={event => void applyVolume(Number(event.target.value))} disabled={!connected}/><output>{volume}%</output></label>
+        <button className="sound-studio-toggle" type="button" aria-expanded={soundStudioOpen} onClick={() => setSoundStudioOpen(value => !value)}><span>≋</span><div><strong>Klangstudio</strong><small>Equalizer & Audio</small></div><b>{soundStudioOpen ? "−" : "+"}</b></button>
+      </div>
+      {soundStudioOpen && <section className="music-equalizer" aria-label="Equalizer">
+        <div className="equalizer-heading"><div><span className="music-kicker">KLANGSTUDIO</span><h3>Equalizer</h3></div><span className="equalizer-status">Spotify-Einschränkung</span></div>
+        <div className="equalizer-preview" aria-hidden="true">{[42,68,53,76,61,47,70].map((height,index)=><i key={index} style={{height:`${height}%`}} />)}</div>
+        <div className="equalizer-copy"><strong>Bass, Mitten und Höhen benötigen direkten Audiozugriff</strong><p>Spotify stellt GamingHub nur Wiedergabe und Lautstärke bereit, aber keine einzelnen Frequenzen. Deshalb zeigt GamingHub keine wirkungslosen Regler an. Ein echter System-Equalizer kann später als optionale Windows-Erweiterung ergänzt werden.</p></div>
+      </section>}
       {deviceMessage && <p className="music-deck-note" role="status">{deviceMessage}</p>}
       {playerError && <div className="music-deck-error" role="alert"><div><strong>Wiedergabe noch nicht verfügbar</strong><p>{playerError}</p></div></div>}
       <details className="music-deck-help">

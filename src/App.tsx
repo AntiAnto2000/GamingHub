@@ -138,7 +138,7 @@ function HubApp() {
     navigate: setActive,
   };
   return (
-    <div className="app" data-accent={settings.accent} data-theme={settings.theme || "graphite"} data-density={settings.density || "comfortable"} data-layout={settings.layoutMode || "standard"} data-motion={settings.reduceMotion ? "reduced" : "full"} style={{ ...(settings.customAccent ? { "--accent": settings.customAccent } : {}), ...(settings.backgroundImage ? { "--hub-background": `linear-gradient(rgb(10 13 12 / ${1-(settings.backgroundOpacity ?? .18)}),rgb(10 13 12 / ${1-(settings.backgroundOpacity ?? .18)})),url(${settings.backgroundImage})` } : {}) } as CSSProperties}>
+    <div className="app" data-accent={settings.accent} data-theme={settings.theme || "graphite"} data-custom-background={settings.backgroundImage ? "true" : "false"} data-density={settings.density || "comfortable"} data-layout={settings.layoutMode || "standard"} data-motion={settings.reduceMotion ? "reduced" : "full"} style={{ ...(settings.customAccent ? { "--accent": settings.customAccent } : {}), ...(settings.backgroundImage ? { "--hub-background": `linear-gradient(rgb(10 13 12 / ${1-(settings.backgroundOpacity ?? .36)}),rgb(10 13 12 / ${1-(settings.backgroundOpacity ?? .36)})),url(${settings.backgroundImage})` } : {}) } as CSSProperties}>
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-icon">GH</span>
