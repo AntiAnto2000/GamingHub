@@ -105,7 +105,10 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
         <div className="settings-actions"><button className="secondary" onClick={addProfile}>＋ Spielprofil</button><button className="secondary" disabled={!profiles.length} onClick={exportProfiles}>Profile exportieren</button><label className="secondary import-button">Profile importieren<input type="file" accept="application/json,.json" onChange={e=>void importProfiles(e.target.files?.[0]).catch(error=>setRepairStatus(String(error)))}/></label><button className="primary" disabled={!profiles.some(profile => profile.enabled)} onClick={() => { const selected=profiles.find(profile=>profile.id===settings.activeGamingProfile&&profile.enabled)||profiles.find(profile=>profile.enabled); if(selected){ setSettings({...settings,activeGamingProfile:selected.id,focusMode:true}); dispatchEvent(new CustomEvent("gaminghub:profile-activated",{detail:selected})); } }}>Gaming-Modus aktivieren</button></div>
         <p className="field-help">Der Gaming-Modus reduziert Ablenkungen. Profile können exportiert werden, enthalten aber niemals Passwörter oder Tokens.</p>
       </section>
-      <section className="panel info-panel">
+      <details className="panel experimental-settings">
+        <summary><span className="experimental-settings-icon">⚙</span><span><small>ERWEITERT</small><strong>Experimentell & Wartung</strong><p>Daten, Diagnose, Updates und technische Informationen.</p></span><b aria-hidden="true">＋</b></summary>
+        <div className="experimental-settings-content">
+      <section className="settings-subsection">
         <h2>Daten & Diagnose</h2>
         <div className="diagnostic-grid"><div><small>Speicher</small><strong>{Math.round(JSON.stringify(localStorage).length / 1024)} KB lokal</strong></div><div><small>Netzwerk</small><strong>{navigator.onLine ? "Online" : "Offline"}</strong></div><div><small>Spotify</small><strong>{sessionStorage.getItem("gaminghub.spotify.token") ? "Verbunden" : "Nicht verbunden"}</strong></div></div>
         <p>Deine Bibliothek und persönlichen Einstellungen bleiben lokal auf diesem PC. Spotify-Anmeldung, Discord-Token und Steam-API-Schlüssel werden niemals exportiert.</p>
@@ -113,7 +116,7 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
         <div className="settings-actions"><button className="secondary" onClick={() => void fullDiagnostics()}>Vollständige Diagnose</button><button className="secondary" onClick={() => { const repaired=repairLocalData(); setRepairStatus(repaired.length ? `${repaired.length} beschädigte Bereiche wurden gesichert und zurückgesetzt. Bitte App neu laden.` : "Keine beschädigten lokalen Daten gefunden."); void fullDiagnostics(); }}>Automatisch reparieren</button><button className="secondary" onClick={() => void invoke<string>("read_crash_log").then(text => { const blob=new Blob([text],{type:"text/plain"}); const url=URL.createObjectURL(blob); const link=document.createElement("a"); link.href=url; link.download="gaminghub-diagnose.txt"; link.click(); URL.revokeObjectURL(url); }).catch(error => setRepairStatus(String(error)))}>Diagnose exportieren</button></div>
         {diagnostics.length > 0 && <div className="diagnostic-results">{diagnostics.map(item => <div key={item.name} data-status={item.status}><i>{item.status === "ok" ? "✓" : item.status === "warning" ? "!" : "×"}</i><span><strong>{item.name}</strong><small>{item.detail}</small></span></div>)}</div>}{repairStatus && <p className="notice" role="status">{repairStatus}</p>}
       </section>
-      <section className="panel info-panel update-settings">
+      <section className="settings-subsection update-settings">
         <div className="settings-section-head"><div className="connection-icon">↻</div><div><h2>GamingHub Updates</h2><p>Neue signierte Versionen automatisch erkennen und direkt installieren.</p></div></div>
         <div className="settings-checks"><label><input type="checkbox" checked={settings.automaticUpdates !== false} onChange={e => setSettings({...settings,automaticUpdates:e.target.checked})}/><span>Beim Start automatisch nach Updates suchen</span></label></div>
         <label className="field-label">Update-Kanal<SelectMenu label="Update-Kanal" value={settings.updateChannel || "stable"} options={[{value:"stable",label:"Stable – empfohlen"},{value:"beta",label:"Beta – früher testen"},{value:"experimental",label:"Experimental – intern"}]} onChange={updateChannel => setSettings({...settings,updateChannel})}/></label>
@@ -121,10 +124,12 @@ export default function SettingsPage({ settings, setSettings, games, setGames }:
         <div className="settings-actions"><button className="primary" onClick={() => dispatchEvent(new Event("gaminghub:check-update"))}>Jetzt nach Updates suchen</button></div>
         <p className="field-help">Update-Pakete werden vor der Installation kryptografisch geprüft. Manipulierte Dateien weist GamingHub ab.</p>
       </section>
-      <section className="panel info-panel privacy-panel">
+      <section className="settings-subsection privacy-panel">
         <h2>Datenschutz & verbundene Dienste</h2>
         <div className="privacy-list"><div><strong>Spotify</strong><p>Anmeldung und Wiedergabe laufen direkt über Spotify. Die Sitzung bleibt nur bis zum Schließen der App erhalten.</p></div><div><strong>Steam</strong><p>Lokale Bibliotheks- und Spielzeitdaten werden auf diesem PC gelesen. Ein eingegebener API-Schlüssel wird nach dem Abruf verworfen.</p></div><div><strong>Discord</strong><p>Ein Bot-Token wird nur für den aktuellen Abruf verwendet und nicht in GamingHub-Backups geschrieben.</p></div><div><strong>GamingHub</strong><p>Bibliothek, Designs und Notizen werden lokal gespeichert. Es gibt kein GamingHub-Cloudkonto.</p></div></div>
       </section>
+        </div>
+      </details>
       <section className="panel info-panel">
         <h2>Über GamingHub</h2>
         <div className="detail-row">
