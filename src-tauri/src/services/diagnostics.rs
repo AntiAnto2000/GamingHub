@@ -1,10 +1,58 @@
 use serde::Serialize;
-use std::{fs, path::PathBuf};
+use std::{fs, path::{Path, PathBuf}, process::Command};
 use tauri::Manager;
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct NativeDiagnostic { name: String, status: String, detail: String }
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InstallationStatus {
+    current_path: String,
+    installed_path: String,
+    running_from_installed_path: bool,
+    installed_exists: bool,
+    current_version: String,
+}
+
+fn installed_executable() -> PathBuf {
+    std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .unwrap_or_else(std::env::temp_dir)
+        .join("GamingHub")
+        .join("gaminghub.exe")
+}
+
+fn same_windows_path(left: &Path, right: &Path) -> bool {
+    let normalize = |path: &Path| path.canonicalize().unwrap_or_else(|_| path.to_path_buf())
+        .to_string_lossy().replace('/', "\\").trim_end_matches('\\').to_lowercase();
+    normalize(left) == normalize(right)
+}
+
+#[tauri::command]
+pub fn installation_status() -> Result<InstallationStatus, String> {
+    let current = std::env::current_exe().map_err(|e| e.to_string())?;
+    let installed = installed_executable();
+    Ok(InstallationStatus {
+        current_path: current.display().to_string(),
+        installed_path: installed.display().to_string(),
+        running_from_installed_path: installed.exists() && same_windows_path(&current, &installed),
+        installed_exists: installed.exists(),
+        current_version: env!("CARGO_PKG_VERSION").into(),
+    })
+}
+
+#[tauri::command]
+pub fn launch_installed_gaminghub() -> Result<(), String> {
+    let installed = installed_executable();
+    if !installed.is_file() { return Err("Die installierte GamingHub-Version wurde nicht gefunden.".into()); }
+    Command::new(&installed)
+        .current_dir(installed.parent().unwrap_or_else(|| Path::new(".")))
+        .spawn()
+        .map_err(|e| format!("Installierte GamingHub-Version konnte nicht gestartet werden: {e}"))?;
+    Ok(())
+}
 
 fn crash_file(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     Ok(app.path().app_log_dir().map_err(|e| e.to_string())?.join("crash.log"))
@@ -36,4 +84,18 @@ pub fn install_panic_log() {
         let _ = fs::create_dir_all(&root);
         let _ = fs::write(root.join("crash.log"), format!("GamingHub panic: {info}\n"));
     }));
+}
+
+#[cfg(test)]
+mod tests {
+    use super::same_windows_path;
+    use std::path::Path;
+
+    #[test]
+    fn compares_windows_paths_case_insensitively() {
+        assert!(same_windows_path(
+            Path::new(r"C:\Users\Anton\AppData\Local\GamingHub\gaminghub.exe"),
+            Path::new(r"c:\users\anton\appdata\local\gaminghub\gaminghub.exe")
+        ));
+    }
 }

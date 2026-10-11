@@ -62,7 +62,9 @@ pub fn run() {
             services::music::open_spotify
             ,services::spotify_auth::spotify_authorize,
             services::diagnostics::native_diagnostics,
-            services::diagnostics::read_crash_log
+            services::diagnostics::read_crash_log,
+            services::diagnostics::installation_status,
+            services::diagnostics::launch_installed_gaminghub
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
