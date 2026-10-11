@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { Heading } from "../components/ui";
 import { LaunchIcon } from "../components/Icons";
 import { useNative } from "../services/native";
@@ -15,7 +16,7 @@ const playTime=(seconds:number)=>`${Math.floor(seconds/3600)} Std. ${Math.floor(
 const distance=(cm:number)=>cm>=100000?`${(cm/100000).toLocaleString("de-DE",{maximumFractionDigits:1})} km`:`${Math.round(cm/100)} m`;
 
 export default function Modrinth(){
-  const {native}=useNative(); const [tab,setTab]=useState<"server"|"launcher">("server"); const [dashboardOpen,setDashboardOpen]=useState(false); const [adding,setAdding]=useState(false); const [busy,setBusy]=useState(false);
+  const {native}=useNative(); const [tab,setTab]=useState<"server"|"launcher">("launcher"); const [dashboardOpen,setDashboardOpen]=useState(false); const [adding,setAdding]=useState(false); const [busy,setBusy]=useState(false);
   const [error,setError]=useState(""); const [telemetryError,setTelemetryError]=useState(""); const [message,setMessage]=useState("");
   const [name,setName]=useState(""); const [address,setAddress]=useState(""); const [token,setToken]=useState(""); const [port,setPort]=useState(8765);
   const [servers,setServers]=useState<SavedServer[]>(()=>{try{const value=JSON.parse(localStorage.getItem(storageKey)||"[]");return Array.isArray(value)?value.filter(item=>item&&typeof item.id==="string"&&typeof item.name==="string"&&typeof item.address==="string"):[]}catch{return[]}}); const [selected,setSelected]=useState(()=>servers[0]?.id||"");
@@ -36,7 +37,7 @@ export default function Modrinth(){
   async function launchInstance(instance:PrismInstance){try{await invoke("launch_prism",{instanceId:instance.id,instancePath:instance.path});setMessage(`„${instance.name}“ wird über Prism gestartet.`);setError("")}catch(reason){setError(String(reason))}}
   return <>
     <Heading eyebrow="MINECRAFT-MODUL" title="Minecraft">Launcher, Fabric-Server und deine Community an einem Ort.</Heading>
-    <div className="minecraft-tabs"><button className={tab==="server"?"active":""} onClick={()=>setTab("server")}>◉ Server</button><button className={tab==="launcher"?"active":""} onClick={()=>setTab("launcher")}>◇ Launcher</button></div>
+    <div className="minecraft-tabs"><button className={tab==="launcher"?"active":""} onClick={()=>setTab("launcher")}>◇ Launcher</button><button className={tab==="server"?"active":""} onClick={()=>setTab("server")}>◉ Server</button></div>
     {tab==="launcher"&&<div className="modrinth-workspace">
       <section className="panel modrinth-hero prism-hero"><div className="modrinth-brand">PL</div><div><span className="eyebrow">PRISM LAUNCHER</span><h2>Modpacks direkt aus GamingHub starten</h2><p>GamingHub übernimmt deine lokalen Prism-Instanzen. Ein Klick startet das ausgewählte Modpack direkt über die offizielle Prism-Kommandozeile.</p></div><div className="modrinth-hero-actions"><button className="secondary button-with-icon" disabled={!native} onClick={()=>void start("open_prism","Prism Launcher")}><LaunchIcon/>Prism öffnen</button></div></section>
       {message&&<p className="feedback" role="status">{message}</p>}{error&&<p className="notice" role="alert">{error}</p>}
@@ -55,6 +56,11 @@ export default function Modrinth(){
         <section className="panel minecraft-players"><div className="section-title"><div><h2>Spieler-Dashboard</h2><p className="muted">Kills, Spielzeit, Strecke und platzierte Blöcke</p></div><span className="pill neutral">{telemetry?.online??status?.playersOnline??0} ONLINE</span></div>{telemetry?.players.length?<div className="minecraft-player-table"><div className="player-table-head"><span>Spieler</span><span>Kills / Tode</span><span>Spielzeit</span><span>Strecke / Blöcke</span></div>{telemetry.players.map(player=><div className="player-table-row" key={player.id}><span><i>{player.name[0]?.toUpperCase()}</i><strong>{player.name}</strong></span><span>{player.kills} / {player.deaths}<small>{player.mobKills} Mob-Kills</small></span><span>{playTime(player.playTimeSeconds)}</span><span>{distance(player.distanceCm)}<small>{player.blocksPlaced.toLocaleString("de-DE")} Blöcke platziert</small></span></div>)}</div>:<div className="minecraft-no-players"><span>♙</span><strong>{telemetry?"Gerade niemand online":"Fabric-Telemetrie noch nicht verbunden"}</strong><p>{telemetry?"Die Tabelle füllt sich automatisch, sobald jemand den Server betritt.":"Die Basisabfrage zeigt Status und Spielerzahl. Für Statistiken installiere die GamingHub-Mod und verbinde ihren Token."}</p></div>}</section>
         <section className="panel minecraft-details"><h2>Serverdetails</h2><div className="detail-row"><span>Adresse</span><span>{status?.address||server.address} <button className="copy-mini" onClick={()=>void navigator.clipboard.writeText(server.address)}>Kopieren</button></span></div><div className="detail-row"><span>Aktualisierung</span><span>Alle 30 Sekunden</span></div><div className="detail-row"><span>Telemetrie</span><span>{server.telemetryConnected?`Sicher verbunden · Port ${server.telemetryPort||8765}`:"Nicht eingerichtet"}</span></div></section>
       </>}</div>
+      <section className="panel minecraft-mod-download">
+        <div className="minecraft-download-mark">FAB</div>
+        <div className="minecraft-download-copy"><span className="eyebrow">SERVER-MOD · MINECRAFT 26.2</span><h2>GamingHub Server Telemetry</h2><p>Installiere diese Mod nur auf deinem Fabric-Server. Sie liefert Spieler, Kills, Spielzeit, Strecke und platzierte Blöcke an dein privates Dashboard – auf den PCs deiner Freunde ist keine Mod nötig.</p><div className="minecraft-download-meta"><span>Fabric Loader 0.19.5+</span><span>Fabric API erforderlich</span><span>Java 25</span></div></div>
+        <div className="minecraft-download-actions"><button className="primary" onClick={()=>void openUrl("https://github.com/AntiAnto2000/GamingHub/releases/download/v1.4.0/gaminghub-telemetry-mc26.2-0.1.1.jar")}>Fabric-Mod herunterladen</button><small>JAR danach in den <code>mods</code>-Ordner des Servers legen.</small></div>
+      </section>
     </div></>}
     {adding&&<div className="utility-modal-backdrop" onMouseDown={()=>setAdding(false)}><section className="utility-modal minecraft-add-modal" onMouseDown={event=>event.stopPropagation()}><header><span>◈</span><div><small>MINECRAFT JAVA</small><h2>Server hinzufügen</h2></div><button className="utility-close" onClick={()=>setAdding(false)}>×</button></header><label className="field-label">Anzeigename<input autoFocus value={name} placeholder="Mein Fabric Server" onChange={event=>setName(event.target.value)}/></label><label className="field-label">Server-IP oder Domain<input value={address} placeholder="play.example.net:25565" onChange={event=>setAddress(event.target.value)} onKeyDown={event=>{if(event.key==="Enter")add()}}/></label><p className="field-help">Die Fabric-Telemetrie kannst du nach dem ersten Serverstart verbinden.</p>{error&&<p className="notice">{error}</p>}<button className="primary modal-main" onClick={add}>Server speichern</button></section></div>}
   </>;

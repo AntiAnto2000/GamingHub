@@ -1,0 +1,11 @@
+{
+  "version": "1.4.0",
+  "notes": "Minecraft öffnet jetzt standardmäßig den Launcher. Das Server-Dashboard enthält einen direkten Download der geprüften Fabric-Server-Mod. Zusätzlich sind die aktuellen Musik-, Theme- und Einstellungsverbesserungen enthalten.",
+  "pub_date": "2026-10-11T13:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUMzRQVmVTWHI3VEhLb0VvSGV0MHFJeE5jT3J0T1Zyd1hTRkliV05jQkZrMUtxZVJnaXJOZVZ5allvV2xXOE5zTUlneW9QWE9TQkJseHRiOWQrRUFTZzh3T0JsWGJYTlE0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNzIyNzQyCWZpbGU6R2FtaW5nSHViXzEuNC4wX3g2NC1zZXR1cC5leGUKeTBEbS9ObENJcFM0RFRQVWkzWTBVYnhaOUpUeFBjVldQSGhtZ3JWbXJtSHBzT2RURjU3UkNYMDN1RVZNRUtjOTg0bWVUSXdER2p3UnhXMXM5VHk5Q3c9PQo=",
+      "url": "https://github.com/AntiAnto2000/GamingHub/releases/download/v1.4.0/GamingHub_1.4.0_x64-setup.exe"
+    }
+  }
+}
