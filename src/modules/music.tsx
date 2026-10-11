@@ -206,14 +206,6 @@ export default function Music() {
           <button className="music-skip icon-button" aria-label="Nächster Titel" disabled={!current || busy} onClick={() => void action(() => output ? remoteControl("next") : player.current!.nextTrack())}><NextIcon/></button>
         </div>
       </div>
-      <div className="music-deck-output">
-        <label htmlFor="music-output">Audioausgabe</label>
-        <select id="music-output" value={output} disabled={busy} onChange={e => { setOutput(e.target.value); setCurrent(null); setPaused(true); setPlayerError(""); }}>
-          <option value="">GamingHub · integrierter Player</option>
-          {outputs.map(item => <option key={item.id} value={item.id}>{item.name}{item.is_active ? " · aktiv" : ""}</option>)}
-        </select>
-        <button className="secondary" disabled={!connected || checkingDevices || busy} onClick={() => void refreshOutputs()}>{checkingDevices ? "Sucht …" : "Aktualisieren"}</button>
-      </div>
       <div className="music-sound-strip">
         <label className="music-volume" htmlFor="music-volume"><span aria-hidden="true">◖</span><strong>Lautstärke</strong><input id="music-volume" type="range" min="0" max="100" value={volume} onChange={event => void applyVolume(Number(event.target.value))} disabled={!connected}/><output>{volume}%</output></label>
         <button className="sound-studio-toggle" type="button" aria-expanded={soundStudioOpen} onClick={() => setSoundStudioOpen(value => !value)}><span>≋</span><div><strong>Klangstudio</strong><small>Equalizer & Audio</small></div><b>{soundStudioOpen ? "−" : "+"}</b></button>
@@ -226,9 +218,16 @@ export default function Music() {
       {deviceMessage && <p className="music-deck-note" role="status">{deviceMessage}</p>}
       {playerError && <div className="music-deck-error" role="alert"><div><strong>Wiedergabe noch nicht verfügbar</strong><p>{playerError}</p></div></div>}
       <details className="music-deck-help">
-        <summary>Verbindung & Hilfe</summary>
-        <p>Für die Spotify-App: Öffne Spotify mit demselben Konto, aktualisiere die Ausgaben und wähle dein Gerät aus.</p>
-        <button className="secondary" disabled={!connected || busy} onClick={() => { setDevice(""); setPlayerError(""); setPlayerGeneration(value => value + 1); }}>Integrierten Player neu verbinden</button>
+        <summary><span>Geräte & Verbindung</span><small>Nur öffnen, wenn die Wiedergabe nicht funktioniert</small></summary>
+        <div className="music-deck-output">
+          <label htmlFor="music-output">Andere Spotify-Ausgabe</label>
+          <select id="music-output" value={output} disabled={busy} onChange={e => { setOutput(e.target.value); setCurrent(null); setPaused(true); setPlayerError(""); }}>
+            <option value="">GamingHub · integrierter Player</option>
+            {outputs.map(item => <option key={item.id} value={item.id}>{item.name}{item.is_active ? " · aktiv" : ""}</option>)}
+          </select>
+          <button className="secondary" disabled={!connected || checkingDevices || busy} onClick={() => void refreshOutputs()}>{checkingDevices ? "Sucht …" : "Geräte suchen"}</button>
+        </div>
+        <div className="music-connection-actions"><p>Normalerweise ist keine Auswahl nötig. Verwende diesen Bereich nur für Spotify auf einem anderen Gerät oder bei Verbindungsproblemen.</p><button className="secondary" disabled={!connected || busy} onClick={() => { setDevice(""); setPlayerError(""); setPlayerGeneration(value => value + 1); }}>Player neu verbinden</button></div>
       </details>
     </section>
   </div>;
