@@ -1,0 +1,11 @@
+{
+  "version": "1.4.1",
+  "notes": "Home-Widgets lassen sich per Drag-and-drop sortieren. Widget-Fenster öffnen zuverlässig über dem gesamten Inhalt. Dateiimporte besitzen ein neues GamingHub-Upload-Design. Discord-Widget und Einstellungen wurden visuell korrigiert.",
+  "pub_date": "2026-10-11T14:30:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUMzRQVmVTWHI3VE0zQWtVSjRMVUtBZzdGdnoxOFhkQUNnTm84aHZISExMUmxVZGZqTjBiakJEYTM4a0cwUXlaajk0bDljSDI2R1lEdXJTbTdSRGovUGZSTU9GQ1UyTkFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzkxNzI3NTYxCWZpbGU6R2FtaW5nSHViXzEuNC4xX3g2NC1zZXR1cC5leGUKYjV5eEhLeWd5aDF2R0NYU282V2lGSW9XS1FtNCtub3VIYVFjZnBtRWY1R3pjc3k0VGg3T2pUWVpkU3NQb2J1SFFSQTE3elZTRkQyN1dyWnYxUHlLRFE9PQo=",
+      "url": "https://github.com/AntiAnto2000/GamingHub/releases/download/v1.4.1/GamingHub_1.4.1_x64-setup.exe"
+    }
+  }
+}

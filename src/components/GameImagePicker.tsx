@@ -1,4 +1,5 @@
 import { useState } from "react";
+import FilePicker from "./FilePicker";
 export default function GameImagePicker({ value, onChange }: { value?: string; onChange: (value?: string) => void }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -20,7 +21,7 @@ export default function GameImagePicker({ value, onChange }: { value?: string; o
     } catch (e) { setError(String(e)); }
     finally { if (url) URL.revokeObjectURL(url); setBusy(false); }
   }
-  return <div><label>Spielbild / Icon<input type="file" accept="image/png,image/jpeg,image/webp" disabled={busy} onChange={e => { void read(e.target.files?.[0]); e.target.value = ""; }} /></label>
+  return <div><label className="file-picker-label">Spielbild / Icon</label><FilePicker label={busy ? "Bild wird vorbereitet …" : "Spielbild auswählen"} hint="JPG, PNG oder WebP · maximal 10 MB" accept="image/png,image/jpeg,image/webp" disabled={busy} onFile={read}/>
     <p className="muted">Das Bild wird mittig auf 16:9 zugeschnitten und lokal gespeichert. JPG, PNG oder WebP, maximal 10 MB.</p>
     {value && <><img className="cover-preview" src={value} alt="Vorschau des Spielbilds" /><button type="button" className="text-button" onClick={() => onChange(undefined)}>Standardbild verwenden</button></>}
     {busy && <p role="status">Bild wird vorbereitet …</p>}{error && <p role="alert">{error}</p>}

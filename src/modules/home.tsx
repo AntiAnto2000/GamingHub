@@ -75,6 +75,8 @@ const cockpitChoices = [
 ] as const;
 export default function Home({ settings, setSettings, games, navigate }: ModuleProps) {
   const [customizing, setCustomizing] = useState(false);
+  const [draggedWidget, setDraggedWidget] = useState("");
+  const [dragTarget, setDragTarget] = useState("");
   const [activity, setActivity] = useState<ActivityEntry[]>(readActivity);
   const favorites = games.filter(game => game.favorite);
   const recentGames = [...games].filter(game => game.lastLaunchedAt).sort((a,b) => (b.lastLaunchedAt || 0) - (a.lastLaunchedAt || 0));
@@ -91,6 +93,12 @@ export default function Home({ settings, setSettings, games, navigate }: ModuleP
     if (from < 0 || to < 0 || to >= next.length) return;
     [next[from], next[to]] = [next[to], next[from]]; setSettings({ ...settings, cockpitWidgets: next });
   };
+  const dropWidget = (targetId: string) => {
+    if (!draggedWidget || draggedWidget === targetId) { setDraggedWidget(""); setDragTarget(""); return; }
+    const next = [...widgetIds]; const from = next.indexOf(draggedWidget); const to = next.indexOf(targetId);
+    if (from >= 0 && to >= 0) { next.splice(from, 1); next.splice(to, 0, draggedWidget); setSettings({ ...settings, cockpitWidgets: next }); }
+    setDraggedWidget(""); setDragTarget("");
+  };
   return (
     <>
       <Heading
@@ -103,14 +111,18 @@ export default function Home({ settings, setSettings, games, navigate }: ModuleP
         <div className="cockpit-title"><div><span className="eyebrow">DEIN COCKPIT</span><strong>Alles Wichtige auf einen Blick</strong><small>Stelle dir deine Schnellübersicht selbst zusammen.</small></div><button className="cockpit-edit" onClick={() => setCustomizing(value => !value)}>{customizing ? "Fertig" : "Anpassen"}</button></div>
         {widgetIds.map(id => {
           const item = cockpitChoices.find(choice => choice.id === id); if (!item) return null;
-          if (["clock","calendar","alarm","stopwatch","timer"].includes(id)) return <UtilityWidget key={id} id={id as "clock"|"calendar"|"alarm"|"stopwatch"|"timer"}/>;
-          if (id === "week") return <button className="cockpit-widget cockpit-wide" key={id} onClick={() => navigate("statistics")}><span>↗</span><strong>{week.launches} Starts</strong><small>{week.activeDays} aktive Tage · Favorit: {week.favorite}</small></button>;
-          if (id === "activity") return <button className="cockpit-widget cockpit-wide" key={id} onClick={() => navigate("statistics")}><span>≡</span><strong>{activity[0]?.title || "Noch ruhig"}</strong><small>{activity[0]?.detail || "Deine Aktivität erscheint hier"}</small></button>;
           const value = id === "favorites" ? String(favorites.length) : id === "library" ? String(games.length) : id === "recent" ? (lastGame?.name || "Noch keines") : id === "music" ? "Player" : "Live";
           const detail = id === "favorites" ? "Lieblingsspiele" : id === "library" ? "Einträge" : id === "recent" ? (lastGame ? new Date(lastGame.lastLaunchedAt!).toLocaleDateString("de-DE") : "Spiel starten") : id === "music" ? "Musik öffnen" : "Werte prüfen";
-          return <button className="cockpit-widget" key={id} onClick={() => navigate(item.page)}><span>{item.icon}</span><strong>{value}</strong><small>{detail}</small></button>;
+          const content = ["clock","calendar","alarm","stopwatch","timer"].includes(id)
+            ? <UtilityWidget id={id as "clock"|"calendar"|"alarm"|"stopwatch"|"timer"}/>
+            : id === "week"
+              ? <button className="cockpit-widget" onClick={() => navigate("statistics")}><span>↗</span><strong>{week.launches} Starts</strong><small>{week.activeDays} aktive Tage · Favorit: {week.favorite}</small></button>
+              : id === "activity"
+                ? <button className="cockpit-widget" onClick={() => navigate("statistics")}><span>≡</span><strong>{activity[0]?.title || "Noch ruhig"}</strong><small>{activity[0]?.detail || "Deine Aktivität erscheint hier"}</small></button>
+                : <button className="cockpit-widget" onClick={() => navigate(item.page)}><span>{item.icon}</span><strong>{value}</strong><small>{detail}</small></button>;
+          return <div key={id} className={`cockpit-widget-slot${id === "week" || id === "activity" ? " cockpit-wide" : ""}${customizing ? " editable" : ""}${draggedWidget === id ? " dragging" : ""}${dragTarget === id ? " drag-target" : ""}`} draggable={customizing} onDragStart={event => { setDraggedWidget(id); event.dataTransfer.effectAllowed="move"; event.dataTransfer.setData("text/plain",id); }} onDragOver={event => { if(customizing){event.preventDefault();event.dataTransfer.dropEffect="move";setDragTarget(id)}}} onDragLeave={()=>{if(dragTarget===id)setDragTarget("")}} onDrop={event=>{event.preventDefault();dropWidget(id)}} onDragEnd={()=>{setDraggedWidget("");setDragTarget("")}} onClickCapture={event=>{if(customizing){event.preventDefault();event.stopPropagation()}}}>{customizing&&<span className="cockpit-drag-handle" aria-hidden="true">⠿</span>}{content}</div>;
         })}
-      </section>{customizing && <section className="cockpit-customizer panel"><div><strong>Cockpit gestalten</strong><small>Widgets einblenden und Reihenfolge ändern</small></div>{cockpitChoices.map(item => { const active=widgetIds.includes(item.id); const index=widgetIds.indexOf(item.id); return <div className="cockpit-option" key={item.id}><label><input type="checkbox" checked={active} onChange={() => toggleWidget(item.id)}/><span>{item.icon}</span>{item.label}</label><div><button disabled={!active || index===0} onClick={() => moveWidget(item.id,-1)}>↑</button><button disabled={!active || index===widgetIds.length-1} onClick={() => moveWidget(item.id,1)}>↓</button></div></div>})}</section>}</>}
+      </section>{customizing && <section className="cockpit-customizer panel"><div><strong>Cockpit gestalten</strong><small>Ziehe die sichtbaren Widgets oben am Griff an ihre neue Position. Die Pfeile funktionieren zusätzlich per Tastatur.</small></div>{cockpitChoices.map(item => { const active=widgetIds.includes(item.id); const index=widgetIds.indexOf(item.id); return <div className="cockpit-option" key={item.id}><label><input type="checkbox" checked={active} onChange={() => toggleWidget(item.id)}/><span>{item.icon}</span>{item.label}</label><div><button disabled={!active || index===0} aria-label={`${item.label} nach vorne verschieben`} onClick={() => moveWidget(item.id,-1)}>↑</button><button disabled={!active || index===widgetIds.length-1} aria-label={`${item.label} nach hinten verschieben`} onClick={() => moveWidget(item.id,1)}>↓</button></div></div>})}</section>}</>}
       {show("showSystem") && !settings.focusMode && <><div className="section-title">
         <h2>Dein System</h2>
         <button className="text-button" onClick={() => navigate("pc")}>
@@ -161,7 +173,7 @@ export default function Home({ settings, setSettings, games, navigate }: ModuleP
         </section>}
         {show("showMusic") && <HomeMusicPlayer navigate={navigate} />}
         {show("showDiscord") && !settings.focusMode && <section className="panel home-discord-panel">
-          <div className="discord-home-visual"><span>◉</span><i></i><b></b></div>
+          <div className="discord-home-visual" aria-hidden="true"><span>⌁</span><i></i><b></b></div>
           <div className="section-title inset"><h2>Discord</h2><span className="pill neutral">Letzte Nachrichten</span></div>
           {recentMessages.length ? <div className="home-discord-list">{recentMessages.slice(0, 30).map(m => {const author=m.author.global_name || m.author.username; return <article key={m.id}><strong style={{color:authorColor(author)}}>{author}</strong><small>{new Date(m.timestamp).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}</small><p>{m.content || "Anhang oder Systemnachricht"}</p></article>})}</div> : <p className="muted">Lade Nachrichten zuerst im Discord-Bereich.</p>}
           <button className="text-button" onClick={() => navigate("discord")}>Discord öffnen ↗</button>

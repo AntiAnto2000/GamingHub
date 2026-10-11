@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { subscribeUtility, utilityActions, type UtilityState } from "../services/utilityRuntime";
 
 type UtilityId = "clock" | "calendar" | "alarm" | "stopwatch" | "timer";
@@ -28,13 +29,13 @@ export default function UtilityWidget({ id }: { id: UtilityId }) {
   const days=new Date(now.getFullYear(),now.getMonth()+1,0).getDate(); const first=(new Date(now.getFullYear(),now.getMonth(),1).getDay()+6)%7;
   return <>
     <button className="utility-widget" onClick={()=>setOpen(true)}><span>{labels[id].toUpperCase()}</span><strong className={id==="clock"?"utility-clock":""}>{summary}</strong><small>{detail}</small><i>Öffnen ↗</i></button>
-    {open&&<div className="utility-modal-backdrop" onMouseDown={()=>setOpen(false)}><section className="utility-modal" role="dialog" aria-modal="true" aria-label={labels[id]} onMouseDown={event=>event.stopPropagation()}>
+    {open&&createPortal(<div className="utility-modal-backdrop" onMouseDown={()=>setOpen(false)}><section className="utility-modal" role="dialog" aria-modal="true" aria-label={labels[id]} onMouseDown={event=>event.stopPropagation()}>
       <header><span>{icons[id]}</span><div><small>COCKPIT-WIDGET</small><h2>{labels[id]}</h2></div><button className="utility-close" aria-label="Schließen" onClick={()=>setOpen(false)}>×</button></header>
       {id==="clock"&&<div className="utility-clock-panel"><strong>{now.toLocaleTimeString("de-DE")}</strong><p>{now.toLocaleDateString("de-DE",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</p></div>}
       {id==="calendar"&&<div className="hub-calendar"><h3>{month}</h3><div className="calendar-week"><b>MO</b><b>DI</b><b>MI</b><b>DO</b><b>FR</b><b>SA</b><b>SO</b></div><div className="calendar-days">{Array.from({length:first},(_,index)=><i key={`e${index}`}/>)}{Array.from({length:days},(_,index)=><span className={index+1===now.getDate()?"today":""} key={index+1}>{index+1}</span>)}</div></div>}
       {id==="alarm"&&<><div className="stepper-row"><Stepper label="Stunden" value={alarmHour} max={23} set={setAlarmHour}/><span>:</span><Stepper label="Minuten" value={alarmMinute} max={59} set={setAlarmMinute}/></div><button className={runtime.alarmActive?"secondary modal-main":"primary modal-main"} onClick={()=>utilityActions.setAlarm(alarm,!runtime.alarmActive)}>{runtime.alarmActive?"Wecker ausschalten":`Wecker auf ${alarm} stellen`}</button></>}
       {id==="stopwatch"&&<><div className="utility-time-display">{clockText(runtime.stopwatchSeconds)}</div><div className="modal-controls"><button className="primary" onClick={()=>utilityActions.toggleStopwatch()}>{runtime.stopwatchRunning?"Pause":"Start"}</button><button className="secondary" onClick={()=>utilityActions.resetStopwatch()}>Zurücksetzen</button></div>{runtime.stopwatchRunning&&!runtime.stopwatchVisible&&<button className="text-button show-floating" onClick={()=>utilityActions.showStopwatch()}>Mini-Stoppuhr wieder einblenden</button>}</>}
       {id==="timer"&&<><div className="utility-time-display">{runtime.timerSeconds?clockText(runtime.timerSeconds):`${timerMinutes} min`}</div>{runtime.timerSeconds===0&&<><div className="timer-presets">{[5,10,15,30].map(value=><button className={timerMinutes===value?"active":""} key={value} onClick={()=>setTimerMinutes(value)}>{value} min</button>)}</div><div className="timer-adjust"><button onClick={()=>setTimerMinutes(value=>Math.max(1,value-1))}>−</button><strong>{timerMinutes} Minuten</strong><button onClick={()=>setTimerMinutes(value=>Math.min(180,value+1))}>＋</button></div></>}<div className="modal-controls"><button className="primary" onClick={()=>utilityActions.toggleTimer(timerMinutes)}>{runtime.timerRunning?"Pause":runtime.timerSeconds?"Fortsetzen":"Timer starten"}</button><button className="secondary" onClick={()=>utilityActions.resetTimer()}>Zurücksetzen</button></div></>}
-    </section></div>}
+    </section></div>,document.body)}
   </>;
 }
